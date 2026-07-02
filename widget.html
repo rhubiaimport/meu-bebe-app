@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Widget Meu Bebê</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #26343d;
+        background: linear-gradient(145deg, #ffffff, #dff2fb 62%, #f4ead9);
+      }
+
+      .widget {
+        min-height: 100vh;
+        display: grid;
+        gap: 8px;
+        padding: 14px;
+        box-sizing: border-box;
+      }
+
+      h1,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: 1.15rem;
+      }
+
+      a {
+        display: block;
+        padding: 8px 10px;
+        border-radius: 14px;
+        color: inherit;
+        background: rgba(255, 255, 255, 0.72);
+        text-decoration: none;
+        font-weight: 750;
+      }
+
+      small {
+        display: block;
+        color: #6e7d86;
+        font-weight: 650;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="widget">
+      <h1>👶🏽 Meu Bebê</h1>
+      <a href="index.html#feed">🍼 Próxima mamada<small>Abra para ver o horário</small></a>
+      <a href="index.html#medicine">💊 Próximo remédio<small>Abra para acompanhar</small></a>
+      <a href="index.html#appointment">🩺 Próxima consulta<small>Abra a agenda</small></a>
+      <a href="index.html#milk">🤱 Leite materno<small>Retirada e validade</small></a>
+    </main>
+    <script>
+      const storageKey = "meu-bebe:v1";
+      const app = JSON.parse(localStorage.getItem(storageKey) || "{}");
+      const baby = (app.babies || []).find((item) => item.id === app.activeBabyId) || (app.babies || [])[0] || {};
+      const records = baby.records || [];
+      const byDateDesc = (a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt);
+      const clock = (value) => {
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? "--:--" : new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(date);
+      };
+      const next = (type, key = "date") => records
+        .filter((record) => record.type === type && new Date(record[key] || record.date) >= new Date())
+        .sort((a, b) => new Date(a[key] || a.date) - new Date(b[key] || b.date))[0];
+      const last = (type) => records.filter((record) => record.type === type).sort(byDateDesc)[0];
+      const feed = last("feed");
+      const medicine = next("medicine", "next");
+      const appointment = next("appointment");
+      const milk = last("milk");
+      const intervalMinutes = Number(app.settings?.feedIntervalHours || 3) * 60;
+      const links = document.querySelectorAll("a");
+      document.querySelector("h1").textContent = `👶🏽 ${baby.name || "Meu Bebê"}`;
+      links[0].querySelector("small").textContent = feed ? `Próxima ${clock(new Date(feed.date || feed.createdAt).getTime() + intervalMinutes * 60000)}` : "Sem mamada";
+      links[1].querySelector("small").textContent = medicine ? `${medicine.name || "Remédio"} às ${clock(medicine.next || medicine.date)}` : "Sem remédio";
+      links[2].querySelector("small").textContent = appointment ? `${appointment.doctor || "Consulta"} às ${clock(appointment.date)}` : "Sem consulta";
+      links[3].querySelector("small").textContent = milk ? `${milk.amount || "Quantidade não informada"} · validade no app` : "Sem retirada";
+    </script>
+  </body>
+</html>

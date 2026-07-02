@@ -1,0 +1,10 @@
+{
+  "name": "Meu Bebê",
+  "items": [
+    { "label": "Próxima mamada", "url": "./index.html#feed" },
+    { "label": "Próximo remédio", "url": "./index.html#medicine" },
+    { "label": "Próxima consulta", "url": "./index.html#appointment" },
+    { "label": "Última retirada de leite", "url": "./index.html#milk" },
+    { "label": "Validade do leite", "url": "./index.html#milk" }
+  ]
+}

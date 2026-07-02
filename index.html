@@ -1,0 +1,892 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#bfe4f8">
+    <meta name="description" content="Meu Bebe: acompanhe mamadas, leite, fraldas, remedios, consultas e crescimento do bebe.">
+    <title>Meu Bebê</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="assets/baby-clouds.png" type="image/png">
+    <link rel="apple-touch-icon" href="assets/baby-clouds.png">
+    <link rel="stylesheet" href="style.css?v=13">
+  </head>
+  <body>
+    <div class="splash" id="splash" aria-hidden="true">
+      <div class="splash-card">
+        <img src="assets/baby-clouds.png" alt="" class="splash-image">
+        <h1>👶🏽 Meu Bebê</h1>
+        <p>Nosso pequeno mundo 👶🏽</p>
+      </div>
+    </div>
+
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <h1>👶🏽 Meu Bebê</h1>
+          <p>Nosso pequeno mundo 👶🏽</p>
+        </div>
+        <div class="topbar-actions" aria-label="Atalhos">
+          <button class="icon-button" id="settingsShortcut" type="button" aria-label="Configurações">⚙️</button>
+          <button class="icon-button" id="notificationsShortcut" type="button" aria-label="Central de Notificações">🔔</button>
+          <button class="icon-button" id="profileShortcut" type="button" aria-label="Perfil do Bebê">👤</button>
+        </div>
+      </header>
+
+      <main class="app-main">
+        <section class="view active" id="view-home" data-view="home">
+          <article class="baby-hero home-baby-card" data-home-card="profile" tabindex="0" role="button" aria-label="Abrir perfil do bebê">
+            <label class="baby-photo">
+              <input id="photoInput" type="file" accept="image/*">
+              <img id="babyPhoto" src="assets/baby-clouds.png" alt="Foto do bebê">
+              <span>Alterar foto</span>
+            </label>
+            <div class="baby-copy">
+              <p class="eyebrow">Perfil ativo</p>
+              <h2 id="babyNameHero">Bebê</h2>
+              <p id="babyAge">Nascimento nao informado</p>
+              <div class="hero-metrics">
+                <span><strong id="babyWeightHero">--</strong> kg <small id="babyWeightTrend">➡️ 0 g</small></span>
+                <span><strong id="babyHeightHero">--</strong> cm <small id="babyHeightTrend">+0 cm</small></span>
+              </div>
+            </div>
+          </article>
+
+          <section class="home-dashboard" id="dashboardCards" aria-label="Resumo da rotina"></section>
+
+          <section class="home-quick-panel" aria-label="Atalhos rápidos">
+            <h2>Atalhos rápidos</h2>
+            <div class="quick-actions home-quick-actions">
+              <button type="button" data-open-form="feed">🍼 Registrar mamada</button>
+              <button type="button" data-open-form="milk">🤱 Registrar leite</button>
+              <button type="button" data-open-form="poop">💩 Registrar cocô</button>
+              <button type="button" data-open-form="pee">💧 Registrar xixi</button>
+              <button type="button" data-open-form="medicine">💊 Dar remédio</button>
+              <button type="button" data-open-form="appointment">🩺 Nova consulta</button>
+            </div>
+          </section>
+        </section>
+
+        <section class="view feed-view" id="view-feed" data-view="feed">
+          <div class="feed-background" aria-hidden="true"></div>
+          <div class="section-heading feed-heading">
+            <h2>🍼 Mamadas</h2>
+            <p>Acompanhe os horários das mamadas do seu bebê.</p>
+          </div>
+
+          <section class="feed-summary-grid" aria-label="Resumo das mamadas">
+            <article class="feed-summary-card">
+              <small>Próxima mamada</small>
+              <strong id="feedNextTime">--:--</strong>
+            </article>
+            <article class="feed-summary-card">
+              <small>⌛ Faltam</small>
+              <strong id="feedCountdown">Sem registro</strong>
+            </article>
+            <article class="feed-summary-card">
+              <small>⌛ Já passou</small>
+              <strong id="feedElapsed">Sem registro</strong>
+            </article>
+            <article class="feed-summary-card">
+              <small>Intervalo anterior</small>
+              <strong id="feedLastInterval">--</strong>
+            </article>
+          </section>
+
+          <section class="feed-layout">
+            <article class="panel feed-register-panel">
+              <h3>Registro rápido</h3>
+              <button class="feed-now-button" id="quickFeedNow" type="button">🍼 Mamou agora</button>
+              <div class="feed-quick-choice" id="feedQuickChoice" aria-live="polite">
+                <button type="button" data-quick-feed="breast">🤱 Peito</button>
+                <button type="button" data-quick-feed="bottle">🍼 Mamadeira</button>
+              </div>
+              <div class="feed-type-picker hidden" id="feedTypePicker" aria-live="polite">
+                <p>Qual lado o bebê mamou?</p>
+                <div>
+                  <button type="button" data-feed-type="Peito esquerdo">🤱 Peito esquerdo</button>
+                  <button type="button" data-feed-type="Peito direito">🤱 Peito direito</button>
+                  <button type="button" data-feed-type="Ambos os lados">🤱 Ambos os lados</button>
+                </div>
+              </div>
+              <div class="feed-success" id="feedFeedback" role="status" aria-live="polite">✅ Mamada registrada com sucesso.</div>
+            </article>
+
+            <form class="panel" id="manualFeedForm">
+              <h3>Registro manual</h3>
+              <label>🕒 Hora da mamada
+                <input name="time" type="time" required>
+              </label>
+              <label class="inline-check">
+                <input id="manualFeedOtherDate" type="checkbox">
+                Registrar em outra data
+              </label>
+              <label class="hidden" id="manualFeedDateWrap">Data
+                <input name="date" type="date">
+              </label>
+              <label>Tipo
+                <select name="feedType">
+                  <option>Peito esquerdo</option>
+                  <option>Peito direito</option>
+                  <option>Ambos os lados</option>
+                  <option>Mamadeira</option>
+                </select>
+              </label>
+              <button type="submit">Salvar mamada anterior</button>
+            </form>
+          </section>
+
+          <section class="panel feed-interval-panel">
+            <h3>Intervalo para próxima mamada</h3>
+            <div class="interval-options" id="feedIntervalOptions">
+              <label><input type="radio" name="feedInterval" value="2"> 2 horas</label>
+              <label><input type="radio" name="feedInterval" value="3"> 3 horas</label>
+              <label><input type="radio" name="feedInterval" value="4"> 4 horas</label>
+            </div>
+          </section>
+
+          <section class="feed-stats-grid" id="feedStats" aria-label="Estatísticas de mamadas"></section>
+
+          <section class="panel feed-history-panel">
+            <h3>Histórico de mamadas</h3>
+            <div class="feed-history" id="feedHistory"></div>
+          </section>
+
+          <form class="feed-edit-panel hidden" id="feedEditForm" aria-label="Editar mamada">
+            <h3>Editar mamada</h3>
+            <input name="id" type="hidden">
+            <label>Horário
+              <input name="time" type="time" required>
+            </label>
+            <label>Data
+              <input name="date" type="date" required>
+            </label>
+            <label>Tipo
+              <select name="feedType">
+                <option>Peito esquerdo</option>
+                <option>Peito direito</option>
+                <option>Ambos os lados</option>
+                <option>Mamadeira</option>
+              </select>
+            </label>
+            <label>Observações
+              <input name="note" type="text" placeholder="Opcional">
+            </label>
+            <label>Quantidade em ml
+              <input name="amount" type="number" min="0" step="1" placeholder="Opcional">
+            </label>
+            <div class="button-row">
+              <button type="submit">Salvar edição</button>
+              <button type="button" id="cancelFeedEdit">Cancelar</button>
+            </div>
+          </form>
+
+          <button class="feed-fab" id="feedFab" type="button" aria-label="Registrar mamada agora">➕</button>
+        </section>
+
+        <section class="view milk-view" id="view-milk" data-view="milk">
+          <div class="feed-background" aria-hidden="true"></div>
+          <div class="section-heading feed-heading">
+            <h2>🤱 Leite Materno</h2>
+            <p>Controle as retiradas e acompanhe a validade do leite.</p>
+          </div>
+
+          <section class="milk-summary-grid" id="milkValidityCards" aria-label="Validade do leite materno"></section>
+
+          <section class="feed-layout">
+            <article class="panel feed-register-panel">
+              <h3>Registro rápido</h3>
+              <button class="feed-now-button" id="openMilkForm" type="button">🤱 Terminei de tirar leite</button>
+              <div class="feed-success" id="milkFeedback" role="status" aria-live="polite">✅ Retirada registrada com sucesso.</div>
+            </article>
+
+            <form class="panel hidden" id="milkForm">
+              <h3>Nova retirada</h3>
+              <label>🕒 Horário em que terminou de tirar leite
+                <input name="time" type="time" required>
+              </label>
+              <label>🍼 Quantidade em ml
+                <input name="amount" type="number" min="0" step="1" placeholder="Opcional">
+              </label>
+              <label class="inline-check">
+                <input id="milkOtherDate" type="checkbox">
+                Registrar em outra data
+              </label>
+              <label class="hidden" id="milkDateWrap">Data
+                <input name="date" type="date">
+              </label>
+              <button type="submit">Salvar retirada</button>
+            </form>
+          </section>
+
+          <section class="milk-stats-grid" id="milkStats" aria-label="Estatísticas de leite materno"></section>
+
+          <section class="panel milk-relation-panel">
+            <h3>Relação com mamadas</h3>
+            <div class="milk-relation-grid" id="milkRelation"></div>
+          </section>
+
+          <section class="panel feed-history-panel">
+            <h3>Histórico de retiradas</h3>
+            <div class="feed-history" id="milkHistory"></div>
+          </section>
+
+          <form class="feed-edit-panel hidden" id="milkEditForm" aria-label="Editar retirada de leite">
+            <h3>Editar retirada</h3>
+            <input name="id" type="hidden">
+            <label>Horário
+              <input name="time" type="time" required>
+            </label>
+            <label>Data
+              <input name="date" type="date" required>
+            </label>
+            <label>Quantidade em ml
+              <input name="amount" type="number" min="0" step="1" placeholder="Opcional">
+            </label>
+            <label>Observações
+              <input name="note" type="text" placeholder="Opcional">
+            </label>
+            <div class="button-row">
+              <button type="submit">Salvar edição</button>
+              <button type="button" id="cancelMilkEdit">Cancelar</button>
+            </div>
+          </form>
+
+          <button class="milk-fab" id="milkFab" type="button" aria-label="Nova retirada">🤱 <span>Nova retirada</span></button>
+        </section>
+
+        <section class="view elimination-view poop-view" id="view-poop" data-view="poop">
+          <div class="elimination-background poop-bg" aria-hidden="true"></div>
+          <div class="section-heading feed-heading">
+            <h2>💩 Cocô</h2>
+            <p>Acompanhe a rotina intestinal do seu bebê.</p>
+          </div>
+
+          <section class="elimination-main-grid">
+            <article class="panel feed-register-panel">
+              <h3>Registro rápido</h3>
+              <button class="feed-now-button" type="button" data-open-elimination="poop">💩 Registrar cocô</button>
+              <label class="inline-check">
+                <input id="poopOtherDate" type="checkbox" data-elimination-other-date="poop">
+                Escolher outra data
+              </label>
+              <label class="hidden" id="poopDateWrap">Data
+                <input id="poopDate" type="date">
+              </label>
+              <div class="elimination-picker hidden" id="poopPicker" aria-live="polite"></div>
+              <div class="feed-success" id="poopFeedback" role="status" aria-live="polite">✅ Registro salvo.</div>
+            </article>
+
+            <section class="feed-summary-grid elimination-summary" id="poopSummary"></section>
+          </section>
+
+          <section class="feed-stats-grid" id="poopStats" aria-label="Estatísticas de cocô"></section>
+          <section class="panel elimination-calendar-panel">
+            <h3>Calendário mensal</h3>
+            <div class="elimination-calendar" id="poopCalendar"></div>
+            <div class="calendar-detail" id="poopCalendarDetail">Toque em um dia com registro.</div>
+          </section>
+          <section class="panel elimination-chart-panel">
+            <h3>Gráficos</h3>
+            <div class="charts-grid">
+              <div><h4>📊 Semanal</h4><div class="bar-chart" id="poopWeeklyChart"></div></div>
+              <div><h4>📈 Mensal</h4><div class="bar-chart" id="poopMonthlyChart"></div></div>
+            </div>
+          </section>
+          <section class="panel feed-history-panel">
+            <h3>Histórico</h3>
+            <div class="feed-history" id="poopHistory"></div>
+          </section>
+          <form class="feed-edit-panel hidden" id="poopEditForm" aria-label="Editar registro de cocô">
+            <h3>Editar cocô</h3>
+            <input name="id" type="hidden">
+            <label>Data
+              <input name="date" type="date" required>
+            </label>
+            <label>Quantidade
+              <select name="count"></select>
+            </label>
+            <label>Observações
+              <input name="note" type="text" list="poopNoteOptions" placeholder="Opcional">
+            </label>
+            <div class="button-row">
+              <button type="submit">Salvar edição</button>
+              <button type="button" data-cancel-elimination="poop">Cancelar</button>
+            </div>
+          </form>
+          <button class="milk-fab" type="button" data-open-elimination="poop" aria-label="Novo registro de cocô">💩 <span>Novo registro</span></button>
+        </section>
+
+        <section class="view elimination-view pee-view" id="view-pee" data-view="pee">
+          <div class="elimination-background pee-bg" aria-hidden="true"></div>
+          <div class="section-heading feed-heading">
+            <h2>💧 Xixi</h2>
+            <p>Acompanhe a quantidade de xixis do seu bebê.</p>
+          </div>
+
+          <section class="elimination-main-grid">
+            <article class="panel feed-register-panel">
+              <h3>Registro rápido</h3>
+              <button class="feed-now-button" type="button" data-open-elimination="pee">💧 Fez xixi</button>
+              <label class="inline-check">
+                <input id="peeOtherDate" type="checkbox" data-elimination-other-date="pee">
+                Escolher outra data
+              </label>
+              <label class="hidden" id="peeDateWrap">Data
+                <input id="peeDate" type="date">
+              </label>
+              <div class="elimination-picker hidden" id="peePicker" aria-live="polite"></div>
+              <div class="feed-success" id="peeFeedback" role="status" aria-live="polite">✅ Registro salvo.</div>
+            </article>
+
+            <section class="feed-summary-grid elimination-summary" id="peeSummary"></section>
+          </section>
+
+          <section class="feed-stats-grid" id="peeStats" aria-label="Estatísticas de xixi"></section>
+          <section class="panel elimination-calendar-panel">
+            <h3>Calendário mensal</h3>
+            <div class="elimination-calendar" id="peeCalendar"></div>
+            <div class="calendar-detail" id="peeCalendarDetail">Toque em um dia com registro.</div>
+          </section>
+          <section class="panel elimination-chart-panel">
+            <h3>Gráficos</h3>
+            <div class="charts-grid">
+              <div><h4>📊 Semanal</h4><div class="bar-chart" id="peeWeeklyChart"></div></div>
+              <div><h4>📈 Mensal</h4><div class="bar-chart" id="peeMonthlyChart"></div></div>
+            </div>
+          </section>
+          <section class="panel feed-history-panel">
+            <h3>Histórico</h3>
+            <div class="feed-history" id="peeHistory"></div>
+          </section>
+          <form class="feed-edit-panel hidden" id="peeEditForm" aria-label="Editar registro de xixi">
+            <h3>Editar xixi</h3>
+            <input name="id" type="hidden">
+            <label>Data
+              <input name="date" type="date" required>
+            </label>
+            <label>Quantidade
+              <select name="count"></select>
+            </label>
+            <label>Observações
+              <input name="note" type="text" placeholder="Opcional">
+            </label>
+            <div class="button-row">
+              <button type="submit">Salvar edição</button>
+              <button type="button" data-cancel-elimination="pee">Cancelar</button>
+            </div>
+          </form>
+          <button class="milk-fab" type="button" data-open-elimination="pee" aria-label="Novo registro de xixi">💧 <span>Novo registro</span></button>
+        </section>
+
+        <section class="view health-view medicine-view" id="view-medicine" data-view="medicine">
+          <div class="health-background medicine-bg" aria-hidden="true"></div>
+          <div class="section-heading feed-heading">
+            <h2>💊 Remédios</h2>
+            <p>Controle todos os medicamentos do seu bebê.</p>
+          </div>
+
+          <section class="health-main-grid">
+            <article class="panel feed-register-panel">
+              <h3>Cadastro rápido</h3>
+              <button class="feed-now-button" id="openMedicineForm" type="button">💊 Adicionar remédio</button>
+              <div class="feed-success" id="medicineFeedback" role="status" aria-live="polite">✅ Remédio salvo.</div>
+            </article>
+
+            <section class="feed-summary-grid health-summary" id="medicineSummary"></section>
+          </section>
+
+          <form class="panel hidden health-form" id="medicineForm">
+            <h3>Novo remédio</h3>
+            <div class="form-grid compact-form-grid">
+              <label>💊 Nome do remédio
+                <input name="name" type="text" placeholder="Ex: Vitamina D" required>
+              </label>
+              <label>💉 Quantidade
+                <input name="dose" type="text" placeholder="Opcional">
+              </label>
+              <label>🕒 Hora em que foi administrado
+                <input name="time" type="time" required>
+              </label>
+              <label class="inline-check">
+                <input id="medicineOtherDate" type="checkbox">
+                Registrar em outra data
+              </label>
+              <label class="hidden" id="medicineDateWrap">Data
+                <input name="date" type="date">
+              </label>
+              <label>Intervalo entre doses
+                <select name="interval" id="medicineInterval">
+                  <option value="4">4 em 4 horas</option>
+                  <option value="6">6 em 6 horas</option>
+                  <option value="8">8 em 8 horas</option>
+                  <option value="12">12 em 12 horas</option>
+                  <option value="24">24 em 24 horas</option>
+                  <option value="custom">Intervalo personalizado</option>
+                </select>
+              </label>
+              <label class="hidden" id="medicineCustomIntervalWrap">Intervalo personalizado em horas
+                <input name="customInterval" type="number" min="1" max="72" step="1" placeholder="Ex: 5">
+              </label>
+              <label>📝 Observações
+                <input name="note" type="text" placeholder="Opcional">
+              </label>
+            </div>
+            <div class="button-row">
+              <button type="submit">Salvar remédio</button>
+              <button type="button" id="cancelMedicineForm">Cancelar</button>
+            </div>
+          </form>
+
+          <section class="feed-stats-grid" id="medicineStats" aria-label="Estatísticas de remédios"></section>
+
+          <section class="panel feed-history-panel">
+            <h3>Histórico de remédios</h3>
+            <div class="feed-history" id="medicineHistory"></div>
+          </section>
+
+          <form class="feed-edit-panel hidden" id="medicineEditForm" aria-label="Editar medicamento">
+            <h3>Editar remédio</h3>
+            <input name="id" type="hidden">
+            <label>Nome
+              <input name="name" type="text" required>
+            </label>
+            <label>Quantidade
+              <input name="dose" type="text" placeholder="Opcional">
+            </label>
+            <label>Data
+              <input name="date" type="date" required>
+            </label>
+            <label>Horário
+              <input name="time" type="time" required>
+            </label>
+            <label>Intervalo em horas
+              <input name="intervalHours" type="number" min="1" max="72" step="1" required>
+            </label>
+            <label>Observações
+              <input name="note" type="text" placeholder="Opcional">
+            </label>
+            <div class="button-row">
+              <button type="submit">Salvar edição</button>
+              <button type="button" id="cancelMedicineEdit">Cancelar</button>
+            </div>
+          </form>
+
+          <button class="milk-fab" id="medicineFab" type="button" aria-label="Adicionar remédio">💊 <span>Adicionar</span></button>
+        </section>
+
+        <section class="view health-view appointment-view" id="view-appointment" data-view="appointment">
+          <div class="health-background appointment-bg" aria-hidden="true"></div>
+          <div class="section-heading feed-heading">
+            <h2>🩺 Consultas</h2>
+            <p>Organize todas as consultas do seu bebê.</p>
+          </div>
+
+          <section class="health-main-grid">
+            <article class="panel feed-register-panel">
+              <h3>Próxima consulta</h3>
+              <button class="feed-now-button" id="openAppointmentForm" type="button">🩺 Nova consulta</button>
+              <div class="feed-success" id="appointmentFeedback" role="status" aria-live="polite">✅ Consulta salva.</div>
+            </article>
+
+            <section class="feed-summary-grid health-summary" id="appointmentSummary"></section>
+          </section>
+
+          <form class="panel hidden health-form" id="appointmentForm">
+            <h3>Nova consulta</h3>
+            <div class="form-grid compact-form-grid">
+              <label>Especialidade
+                <select name="doctor" id="appointmentDoctor">
+                  <option>Médico de Família</option>
+                  <option>Pediatra</option>
+                  <option>Enfermeira</option>
+                  <option>Outro</option>
+                </select>
+              </label>
+              <label class="hidden" id="appointmentOtherDoctorWrap">Escrever especialidade
+                <input name="otherDoctor" type="text" placeholder="Ex: Cardiologista">
+              </label>
+              <label>📅 Data
+                <input name="date" type="date" required>
+              </label>
+              <label>🕒 Horário
+                <input name="time" type="time" required>
+              </label>
+              <label>📍 Local
+                <input name="place" type="text" placeholder="Centro de Saúde" required>
+              </label>
+              <label>☎️ Telefone
+                <input name="phone" type="tel" placeholder="Opcional">
+              </label>
+              <label>📝 Observações
+                <input name="note" type="text" placeholder="Opcional">
+              </label>
+            </div>
+            <div class="button-row">
+              <button type="submit">Salvar consulta</button>
+              <button type="button" id="cancelAppointmentForm">Cancelar</button>
+            </div>
+          </form>
+
+          <section class="panel elimination-calendar-panel">
+            <h3>Calendário mensal</h3>
+            <div class="elimination-calendar" id="appointmentCalendar"></div>
+            <div class="calendar-detail" id="appointmentCalendarDetail">Toque em um dia com consulta.</div>
+          </section>
+
+          <section class="panel feed-history-panel">
+            <h3>Histórico de consultas</h3>
+            <div class="feed-history" id="appointmentHistory"></div>
+          </section>
+
+          <form class="feed-edit-panel hidden" id="appointmentEditForm" aria-label="Editar consulta">
+            <h3>Editar consulta</h3>
+            <input name="id" type="hidden">
+            <label>Especialidade
+              <input name="doctor" type="text" required>
+            </label>
+            <label>Data
+              <input name="date" type="date" required>
+            </label>
+            <label>Horário
+              <input name="time" type="time" required>
+            </label>
+            <label>Local
+              <input name="place" type="text" required>
+            </label>
+            <label>Telefone
+              <input name="phone" type="tel" placeholder="Opcional">
+            </label>
+            <label>Observações
+              <input name="note" type="text" placeholder="Opcional">
+            </label>
+            <div class="button-row">
+              <button type="submit">Salvar edição</button>
+              <button type="button" id="cancelAppointmentEdit">Cancelar</button>
+            </div>
+          </form>
+
+          <button class="milk-fab" id="appointmentFab" type="button" aria-label="Nova consulta">🩺 <span>Nova consulta</span></button>
+        </section>
+
+        <section class="view" id="view-register" data-view="register">
+          <div class="section-heading">
+            <p class="eyebrow">Salvar automaticamente</p>
+            <h2>Registrar rotina</h2>
+          </div>
+
+          <div class="form-grid">
+            <form class="panel" data-form="feed">
+              <h3>🍼 Mamadas</h3>
+              <label>Tipo
+                <select name="type">
+                  <option>Mamadeira</option>
+                  <option>Peito esquerdo</option>
+                  <option>Peito direito</option>
+                  <option>Ambos os peitos</option>
+                </select>
+              </label>
+              <label>Quantidade ou duração
+                <input name="amount" type="text" placeholder="Ex: 90 ml ou 18 min">
+              </label>
+              <label>Data e hora
+                <input name="date" type="datetime-local">
+              </label>
+              <button type="submit">Salvar mamada</button>
+            </form>
+
+            <form class="panel" data-form="milk">
+              <h3>🧊 Retirada de leite</h3>
+              <label>Quantidade retirada
+                <input name="amount" type="text" placeholder="Ex: 120 ml">
+              </label>
+              <label>Armazenamento
+                <select name="place">
+                  <option>Geladeira</option>
+                  <option>Freezer</option>
+                  <option>Temperatura ambiente</option>
+                </select>
+              </label>
+              <label>Validade
+                <input name="expires" type="datetime-local">
+              </label>
+              <button type="submit">Salvar leite</button>
+            </form>
+
+            <form class="panel" data-form="diaper">
+              <h3>☁ Fraldas</h3>
+              <label>Tipo
+                <select name="type">
+                  <option>Xixi</option>
+                  <option>Cocô</option>
+                  <option>Xixi e cocô</option>
+                </select>
+              </label>
+              <label>Observação
+                <input name="note" type="text" placeholder="Ex: cor, textura, quantidade">
+              </label>
+              <label>Data e hora
+                <input name="date" type="datetime-local">
+              </label>
+              <button type="submit">Salvar fralda</button>
+            </form>
+
+            <form class="panel" data-form="medicine">
+              <h3>💊 Remédios</h3>
+              <label>Nome
+                <input name="name" type="text" placeholder="Ex: Vitamina D">
+              </label>
+              <label>Dose
+                <input name="dose" type="text" placeholder="Ex: 2 gotas">
+              </label>
+              <label>Próximo horário
+                <input name="next" type="datetime-local">
+              </label>
+              <button type="submit">Salvar remédio</button>
+            </form>
+
+            <form class="panel" data-form="appointment">
+              <h3>🩺 Consultas</h3>
+              <label>Especialidade
+                <input name="doctor" type="text" placeholder="Ex: Pediatra">
+              </label>
+              <label>Local
+                <input name="place" type="text" placeholder="Clínica ou hospital">
+              </label>
+              <label>Data e hora
+                <input name="date" type="datetime-local">
+              </label>
+              <button type="submit">Salvar consulta</button>
+            </form>
+
+            <form class="panel" data-form="growth">
+              <h3>📏 Crescimento</h3>
+              <label>Peso atual (kg)
+                <input name="weight" type="number" min="0" step="0.01" placeholder="Ex: 5.80">
+              </label>
+              <label>Tamanho atual (cm)
+                <input name="height" type="number" min="0" step="0.1" placeholder="Ex: 62">
+              </label>
+              <label>Data da medição
+                <input name="date" type="date">
+              </label>
+              <button type="submit">Salvar medida</button>
+            </form>
+          </div>
+        </section>
+
+        <section class="view" id="view-history" data-view="history">
+          <div class="section-heading">
+            <p class="eyebrow">Linha do tempo</p>
+            <h2>Histórico completo</h2>
+          </div>
+          <div class="filter-row">
+            <select id="historyFilter" aria-label="Filtrar histórico">
+              <option value="all">Todos</option>
+              <option value="feed">Mamadas</option>
+              <option value="milk">Leite</option>
+              <option value="diaper">Fraldas</option>
+              <option value="medicine">Remédios</option>
+              <option value="appointment">Consultas</option>
+              <option value="growth">Crescimento</option>
+            </select>
+            <button type="button" id="clearOld">Corrigir e limpar vazios</button>
+          </div>
+          <div class="timeline" id="timeline"></div>
+        </section>
+
+        <section class="view profile-view" id="view-profile" data-view="profile">
+          <div class="profile-background" aria-hidden="true"></div>
+          <div class="section-heading feed-heading">
+            <h2>👶🏽 Perfil do Bebê</h2>
+            <p>Todas as informações do seu pequeno em um só lugar.</p>
+          </div>
+
+          <section class="profile-admin-grid">
+            <form class="panel profile-form" id="profileForm">
+              <h3>Dados do bebê</h3>
+              <label>👶🏽 Nome
+                <input name="name" type="text" required>
+              </label>
+              <label class="file-button profile-photo-button">🖼️ Alterar foto
+                <input id="profilePhotoInput" type="file" accept="image/*">
+              </label>
+              <label>📅 Data de nascimento
+                <input name="birthDate" type="date">
+              </label>
+              <label>🚻 Sexo
+                <select name="sex">
+                  <option value="">Não informar</option>
+                  <option>Menina</option>
+                  <option>Menino</option>
+                  <option>Outro</option>
+                </select>
+              </label>
+              <label>⚖️ Peso atual (kg)
+                <input name="weight" type="number" min="0" step="0.01">
+              </label>
+              <label>📏 Tamanho atual (cm)
+                <input name="height" type="number" min="0" step="0.1">
+              </label>
+              <button type="submit">Atualizar perfil</button>
+            </form>
+
+            <article class="panel">
+              <h3>Perfis de bebês</h3>
+              <div id="babyProfiles" class="profile-list"></div>
+              <button type="button" id="addBaby">👶🏽 Adicionar bebê</button>
+            </article>
+          </section>
+
+          <section class="panel hidden" id="welcomePanel">
+            <h3>Vamos cadastrar o seu bebê</h3>
+            <form id="welcomeForm" class="compact-form-grid">
+              <label>Nome
+                <input name="name" type="text" required placeholder="Nome do bebê">
+              </label>
+              <label>Data de nascimento
+                <input name="birthDate" type="date">
+              </label>
+              <label>Peso inicial (kg)
+                <input name="weight" type="number" min="0" step="0.01">
+              </label>
+              <label>Tamanho inicial (cm)
+                <input name="height" type="number" min="0" step="0.1">
+              </label>
+              <button type="submit">Salvar bebê</button>
+            </form>
+          </section>
+
+          <section class="panel growth-panel">
+            <div class="section-row">
+              <h3>Crescimento</h3>
+              <button type="button" id="openGrowthForm">Adicionar nova medição</button>
+            </div>
+            <form class="compact-form-grid hidden" id="growthForm">
+              <label>Data
+                <input name="date" type="date" required>
+              </label>
+              <label>Peso (kg)
+                <input name="weight" type="number" min="0" step="0.01" required>
+              </label>
+              <label>Tamanho (cm)
+                <input name="height" type="number" min="0" step="0.1" required>
+              </label>
+              <div class="button-row">
+                <button type="submit">Salvar medição</button>
+                <button type="button" id="cancelGrowthForm">Cancelar</button>
+              </div>
+            </form>
+            <div class="growth-table-wrap">
+              <table class="growth-table">
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Peso</th>
+                    <th>Tamanho</th>
+                    <th>Evolução</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="growthTable"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="panel elimination-chart-panel">
+            <h3>Gráficos de crescimento</h3>
+            <div class="charts-grid">
+              <div><h4>📈 Evolução do peso</h4><div class="bar-chart" id="weightChart"></div></div>
+              <div><h4>📈 Evolução da altura</h4><div class="bar-chart" id="heightChart"></div></div>
+              <div><h4>📈 Crescimento mensal</h4><div class="bar-chart" id="monthlyGrowthChart"></div></div>
+            </div>
+          </section>
+
+          <form class="feed-edit-panel hidden" id="growthEditForm" aria-label="Editar medição">
+            <h3>Editar medição</h3>
+            <input name="id" type="hidden">
+            <label>Data
+              <input name="date" type="date" required>
+            </label>
+            <label>Peso (kg)
+              <input name="weight" type="number" min="0" step="0.01" required>
+            </label>
+            <label>Tamanho (cm)
+              <input name="height" type="number" min="0" step="0.1" required>
+            </label>
+            <div class="button-row">
+              <button type="submit">Salvar edição</button>
+              <button type="button" id="cancelGrowthEdit">Cancelar</button>
+            </div>
+          </form>
+
+          <section class="panel backup-panel">
+            <h3>💾 Backup</h3>
+            <p>O backup guarda perfil, rotina, histórico, crescimento e configurações offline.</p>
+            <div class="button-row">
+              <button type="button" id="exportData">📤 Exportar Backup</button>
+              <label class="file-button">📥 Importar Backup
+                <input type="file" id="importData" accept="application/json">
+              </label>
+            </div>
+          </section>
+
+          <section class="panel privacy-panel">
+            <h3>Privacidade e expansão futura</h3>
+            <p id="privacySummary">Tudo permanece salvo apenas neste dispositivo via LocalStorage. Cada bebê possui identificador único e histórico independente, preparado para login, sincronização e banco online futuramente.</p>
+          </section>
+        </section>
+
+        <section class="view" id="view-tools" data-view="tools">
+          <div class="section-heading">
+            <p class="eyebrow">Segurança dos dados</p>
+            <h2>Backup e notificações</h2>
+          </div>
+          <div class="tools-grid">
+            <article class="panel">
+              <h3>Backup offline</h3>
+              <p>Exporte todos os dados em JSON e importe novamente quando precisar.</p>
+              <div class="button-row">
+                <button type="button" id="exportDataTools">Exportar backup</button>
+                <label class="file-button">Importar
+                  <input type="file" id="importDataTools" accept="application/json">
+                </label>
+              </div>
+            </article>
+
+            <article class="panel">
+              <h3>Notificações</h3>
+              <p>O app destaca itens vencidos ou próximos: leite, remédios e consultas.</p>
+              <label class="switch">Alertas visuais
+                <input type="checkbox" id="alertsToggle">
+                <span></span>
+              </label>
+              <div id="alertsList" class="alerts-list"></div>
+            </article>
+          </div>
+        </section>
+      </main>
+
+      <nav class="tabbar" aria-label="Navegação principal">
+        <button class="active" type="button" data-tab="home"><span>⌂</span>Início</button>
+        <button type="button" data-tab="feed"><span>🍼</span>Mamadas</button>
+        <button type="button" data-tab="milk"><span>🤱</span>Leite</button>
+        <button type="button" data-tab="poop"><span>💩</span>Cocô</button>
+        <button type="button" data-tab="pee"><span>💧</span>Xixi</button>
+        <button type="button" data-tab="medicine"><span>💊</span>Remédios</button>
+        <button type="button" data-tab="appointment"><span>🩺</span>Médico</button>
+        <button type="button" data-tab="profile"><span>👶🏽</span>Perfil</button>
+      </nav>
+    </div>
+
+    <datalist id="poopNoteOptions">
+      <option value="Normal"></option>
+      <option value="Mais líquido"></option>
+      <option value="Mais duro"></option>
+      <option value="Com bolinhas"></option>
+      <option value="Outra observação"></option>
+    </datalist>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="script.js?v=13"></script>
+  </body>
+</html>

@@ -1,0 +1,63 @@
+{
+  "name": "Meu Bebê",
+  "short_name": "Meu Bebê",
+  "description": "Controle offline da rotina do bebê.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f8fbfd",
+  "theme_color": "#bfe4f8",
+  "shortcuts": [
+    {
+      "name": "Registrar mamada",
+      "short_name": "Mamada",
+      "url": "./index.html#feed",
+      "icons": [{ "src": "assets/baby-clouds.png", "sizes": "512x512", "type": "image/png" }]
+    },
+    {
+      "name": "Dar remédio",
+      "short_name": "Remédio",
+      "url": "./index.html#medicine",
+      "icons": [{ "src": "assets/baby-clouds.png", "sizes": "512x512", "type": "image/png" }]
+    },
+    {
+      "name": "Nova consulta",
+      "short_name": "Consulta",
+      "url": "./index.html#appointment",
+      "icons": [{ "src": "assets/baby-clouds.png", "sizes": "512x512", "type": "image/png" }]
+    }
+  ],
+  "widgets": [
+    {
+      "name": "Meu Bebê Pequeno",
+      "tag": "small",
+      "template": "widget.html?size=small",
+      "ms_ac_template": "widget.html?size=small",
+      "data": "widget-data.json",
+      "screenshots": [{ "src": "assets/baby-clouds.png", "sizes": "512x512", "type": "image/png" }]
+    },
+    {
+      "name": "Meu Bebê Médio",
+      "tag": "medium",
+      "template": "widget.html?size=medium",
+      "ms_ac_template": "widget.html?size=medium",
+      "data": "widget-data.json",
+      "screenshots": [{ "src": "assets/baby-clouds.png", "sizes": "512x512", "type": "image/png" }]
+    },
+    {
+      "name": "Meu Bebê Grande",
+      "tag": "large",
+      "template": "widget.html?size=large",
+      "ms_ac_template": "widget.html?size=large",
+      "data": "widget-data.json",
+      "screenshots": [{ "src": "assets/baby-clouds.png", "sizes": "512x512", "type": "image/png" }]
+    }
+  ],
+  "icons": [
+    {
+      "src": "assets/baby-clouds.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
