@@ -173,6 +173,13 @@ function todayInput() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function dateTimeOrNow(date, time) {
+  if (date && time) return `${date}T${time}`;
+  if (date) return `${date}T12:00`;
+  if (time) return `${todayInput()}T${time}`;
+  return new Date().toISOString();
+}
+
 function formatDate(value) {
   if (!value) return "Agora";
   const date = new Date(value);
@@ -333,7 +340,7 @@ function registerManualFeed(time, date, feedType) {
   addRecord("feed", {
     feedType,
     note: "",
-    date: `${baseDate}T${time}`
+    date: dateTimeOrNow(baseDate, time)
   });
   showFeedFeedback();
   requestNotificationPermission();
@@ -355,12 +362,13 @@ function showFeedFeedback(message = "✅ Mamada registrada com sucesso.") {
   feedback.timer = window.setTimeout(() => feedback.classList.remove("show"), 2600);
 }
 
-function registerMilk(time, date, amount) {
+function registerMilk(time, date, amount, side = "") {
   const baseDate = date || todayInput();
   addRecord("milk", {
     amount: amount ? `${Math.round(Number(amount))} ml` : "",
+    side,
     note: "",
-    date: `${baseDate}T${time}`
+    date: dateTimeOrNow(baseDate, time)
   });
   showMilkFeedback();
   requestNotificationPermission();
@@ -544,7 +552,7 @@ function getGrowthSummary(baby) {
   const weightStatus = weightDiff > 0 ? "✅ Ganhou peso" : weightDiff < 0 ? "⚠️ Perdeu peso" : "➡️ Peso estável";
   return {
     weightStatus,
-    weightTrend: `${weightStatus.split(" ")[0]} ${weightDiff > 0 ? "+" : ""}${weightDiff} g`,
+    weightTrend: `${weightStatus.split(" ")[0]} ${formatWeightGain(weightDiff)}`,
     heightTrend: `${heightDiff > 0 ? "+" : ""}${heightDiff} cm`
   };
 }
@@ -554,14 +562,27 @@ function growthRecords(baby = activeBaby()) {
 }
 
 function growthEvolution(record, previous) {
-  if (!previous) return { weight: "➡️ Peso inicial · 0 g", height: "+0 cm" };
+  if (!previous) return { weight: "➡️ Peso inicial · 0 g", height: "+0 cm", head: "+0 cm" };
   const weightDiff = Math.round((Number(record.weight || 0) - Number(previous.weight || 0)) * 1000);
   const heightDiff = Number((Number(record.height || 0) - Number(previous.height || 0)).toFixed(1));
+  const headDiff = Number((Number(record.head || 0) - Number(previous.head || 0)).toFixed(1));
   const status = weightDiff > 0 ? "✅ Ganhou peso" : weightDiff < 0 ? "⚠️ Perdeu peso" : "➡️ Peso estável";
   return {
-    weight: `${status} · ${weightDiff > 0 ? "+" : ""}${weightDiff} g`,
-    height: `${heightDiff > 0 ? "+" : ""}${heightDiff} cm`
+    weight: `${status} · ${formatWeightGain(weightDiff)}`,
+    height: `${heightDiff > 0 ? "+" : ""}${heightDiff} cm`,
+    head: `${headDiff > 0 ? "+" : ""}${headDiff} cm`
   };
+}
+
+function formatWeightGain(grams) {
+  const prefix = grams > 0 ? "+" : grams < 0 ? "-" : "";
+  const abs = Math.abs(grams);
+  if (abs >= 1000) {
+    const kg = Math.floor(abs / 1000);
+    const rest = String(abs % 1000).padStart(3, "0");
+    return `${prefix}${kg},${rest} kg`;
+  }
+  return `${prefix}${abs} g`;
 }
 
 function renderGrowthView(baby) {
@@ -575,30 +596,23 @@ function renderGrowthView(baby) {
         <td>${esc(formatOnlyDate(record.date))}</td>
         <td>${esc(record.weight || "--")} kg</td>
         <td>${esc(record.height || "--")} cm</td>
-        <td><strong>${esc(evolution.weight)}</strong><small>${esc(evolution.height)}</small></td>
+        <td>${esc(record.head || "--")} cm</td>
+        <td><strong>${esc(evolution.weight)}</strong><small>Altura: ${esc(evolution.height)} · Perímetro: ${esc(evolution.head)}</small></td>
         <td>
           <button type="button" data-edit-growth="${esc(record.id)}" aria-label="Editar medição">✎</button>
           <button type="button" data-delete-growth="${esc(record.id)}" aria-label="Excluir medição">×</button>
         </td>
       </tr>
     `;
-  }).join("") : `<tr><td colspan="5">Nenhuma medição registrada ainda.</td></tr>`;
+  }).join("") : `<tr><td colspan="6">Nenhuma medição registrada ainda.</td></tr>`;
   renderGrowthCharts(chronological);
 }
 
 function renderGrowthCharts(records) {
   const labelFor = (record) => formatOnlyDate(record.date).slice(0, 5);
-  renderBarChart("#weightChart", records.length ? records.map((record) => [labelFor(record), Number(record.weight || 0)]) : [["--", 0]]);
-  renderBarChart("#heightChart", records.length ? records.map((record) => [labelFor(record), Number(record.height || 0)]) : [["--", 0]]);
-  const monthly = records.reduce((groups, record, index) => {
-    if (!index) return groups;
-    const key = new Intl.DateTimeFormat("pt-BR", { month: "short" }).format(new Date(record.date));
-    const diff = Math.max(0, Number(record.height || 0) - Number(records[index - 1].height || 0));
-    groups[key] = (groups[key] || 0) + diff;
-    return groups;
-  }, {});
-  const monthItems = Object.entries(monthly).map(([label, value]) => [label, Number(value.toFixed(1))]);
-  renderBarChart("#monthlyGrowthChart", monthItems.length ? monthItems : [["--", 0]]);
+  renderLineChart("#weightChart", records.map((record) => [labelFor(record), Number(record.weight || 0), "kg"]));
+  renderLineChart("#heightChart", records.map((record) => [labelFor(record), Number(record.height || 0), "cm"]));
+  renderLineChart("#headChart", records.map((record) => [labelFor(record), Number(record.head || 0), "cm"]));
 }
 
 function getFeedSummary(records) {
@@ -622,6 +636,8 @@ function feedRecords(baby) {
 function renderFeedView(baby) {
   const records = feedRecords(baby);
   const summary = getFeedSummary(baby.records);
+  const lastBreast = records.find((record) => String(record.feedType || "").includes("Peito"));
+  $("#feedLastBreast").textContent = lastBreast ? (lastBreast.feedType || "Peito") : "--";
   $("#feedNextTime").textContent = summary.nextTime;
   $("#feedCountdown").textContent = summary.countdown;
   $("#feedElapsed").textContent = summary.elapsed;
@@ -643,16 +659,9 @@ function renderFeedStats(records) {
   const yesterday = new Date();
   yesterday.setDate(today.getDate() - 1);
   const sameDay = (record, date) => new Date(record.date).toDateString() === date.toDateString();
-  const intervals = feedIntervals(records);
-  const days = new Set(records.map((record) => new Date(record.date).toDateString()));
-  const averageDaily = days.size ? (records.length / days.size).toFixed(1).replace(".0", "") : "0";
   const stats = [
     ["🍼 Mamadas hoje", records.filter((record) => sameDay(record, today)).length],
-    ["🍼 Mamadas ontem", records.filter((record) => sameDay(record, yesterday)).length],
-    ["📊 Média diária", averageDaily],
-    ["⏱️ Maior intervalo", intervals.length ? formatDuration(Math.max(...intervals)) : "--"],
-    ["⏱️ Menor intervalo", intervals.length ? formatDuration(Math.min(...intervals)) : "--"],
-    ["⏱️ Tempo médio", intervals.length ? formatDuration(intervals.reduce((sum, item) => sum + item, 0) / intervals.length) : "--"]
+    ["🍼 Mamadas ontem", records.filter((record) => sameDay(record, yesterday)).length]
   ];
 
   $("#feedStats").innerHTML = stats.map(([label, value]) => `
@@ -733,7 +742,7 @@ function getMilkSummary(records) {
   const nearest = Object.values(validity).filter((date) => date > now).sort((a, b) => a - b)[0];
   return {
     lastTime: formatClock(last.date),
-    amount: last.amount || "Quantidade não informada",
+    amount: `${last.amount || "Quantidade não informada"} · ${last.side || "Lado não informado"}`,
     ambient: `Válido até ${formatFullDateTime(validity.ambient)}`,
     fridge: `Válido até ${formatFullDateTime(validity.fridge)}`,
     freezer: `Válido até ${formatFullDateTime(validity.freezer)}`,
@@ -757,7 +766,6 @@ function renderMilkView(baby) {
   const records = milkRecords(baby);
   renderMilkValidityCards(records[0]);
   renderMilkStats(records);
-  renderMilkRelation(baby, records[0]);
   renderMilkHistory(records);
 }
 
@@ -773,6 +781,7 @@ function renderMilkValidityCards(record) {
       <small>${esc(rule)}</small>
       <h3>${esc(title)}</h3>
       <p>Retirada: <strong>${esc(formatFullDateTime(record.date))}</strong></p>
+      <p>Lado: <strong>${esc(record.side || "Não informado")}</strong></p>
       <p>Válido até: <strong>${esc(formatFullDateTime(date))}</strong></p>
       <p>Faltam: <strong>${esc(formatLongRemaining(date - new Date()))}</strong></p>
     </article>
@@ -850,6 +859,7 @@ function renderMilkHistory(records) {
           <article class="feed-history-item milk-history-item">
             <div>
               <strong>${esc(formatClock(record.date))}${record.amount ? ` — ${esc(record.amount)}` : ""}</strong>
+              <span>Lado: ${esc(record.side || "Não informado")}</span>
               <span>Ambiente: ${esc(formatFullDateTime(validity.ambient))} · ${esc(formatLongRemaining(validity.ambient - new Date()))}</span>
               <small>Geladeira: ${esc(formatFullDateTime(validity.fridge))} · Congelador: ${esc(formatFullDateTime(validity.freezer))}${record.note ? ` · ${esc(record.note)}` : ""}</small>
             </div>
@@ -1044,6 +1054,37 @@ function renderBarChart(selector, items, label) {
   `).join("");
 }
 
+function renderLineChart(selector, items) {
+  const target = $(selector);
+  if (!items.length) {
+    target.innerHTML = `<div class="empty">Sem dados suficientes.</div>`;
+    return;
+  }
+  const width = 320;
+  const height = 150;
+  const values = items.map(([, value]) => value).filter((value) => Number.isFinite(value));
+  const min = Math.min(...values, 0);
+  const max = Math.max(...values, 1);
+  const range = Math.max(1, max - min);
+  const points = items.map(([label, value], index) => {
+    const x = items.length === 1 ? width / 2 : 24 + (index * (width - 48)) / (items.length - 1);
+    const y = height - 26 - ((value - min) / range) * (height - 54);
+    return { label, value, x, y };
+  });
+  target.innerHTML = `
+    <svg class="growth-line-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Gráfico de crescimento">
+      <line x1="24" y1="${height - 26}" x2="${width - 18}" y2="${height - 26}" />
+      <line x1="24" y1="18" x2="24" y2="${height - 26}" />
+      <polyline points="${points.map((point) => `${point.x},${point.y}`).join(" ")}" />
+      ${points.map((point) => `
+        <circle cx="${point.x}" cy="${point.y}" r="4" />
+        <text x="${point.x}" y="${Math.max(14, point.y - 9)}">${esc(point.value)}</text>
+        <text x="${point.x}" y="${height - 8}">${esc(point.label)}</text>
+      `).join("")}
+    </svg>
+  `;
+}
+
 function fillEliminationEditOptions(kind) {
   const select = $(`#${kind}EditForm select[name="count"]`);
   if (!select || select.options.length) return;
@@ -1085,7 +1126,7 @@ function medicineRecords(baby = activeBaby()) {
 function medicineNextDate(record) {
   if (record.next) return new Date(record.next);
   const interval = Number(record.intervalHours || 0);
-  return addTime(record.date, interval * 60);
+  return addTime(record.date, interval * 60) || new Date(record.date || record.createdAt || Date.now());
 }
 
 function medicineIntervalLabel(record) {
@@ -1095,12 +1136,13 @@ function medicineIntervalLabel(record) {
 
 function registerMedicine(data) {
   const intervalHours = data.interval === "custom" ? Number(data.customInterval) : Number(data.interval);
-  const date = `${data.date || todayInput()}T${data.time}`;
-  const nextDate = addTime(date, intervalHours * 60);
+  const date = dateTimeOrNow(data.date, data.time);
+  const nextDate = intervalHours ? addTime(date, intervalHours * 60) : null;
   addRecord("medicine", {
     name: data.name.trim() || "Remédio",
     dose: data.dose,
     note: data.note,
+    taken: data.taken,
     intervalHours,
     date,
     next: nextDate?.toISOString()
@@ -1159,10 +1201,7 @@ function renderMedicineStats(records) {
   const startWeek = new Date(now);
   startWeek.setDate(now.getDate() - now.getDay());
   startWeek.setHours(0, 0, 0, 0);
-  const startMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const today = records.filter((record) => new Date(record.date).toDateString() === now.toDateString()).length;
-  const week = records.filter((record) => new Date(record.date) >= startWeek).length;
-  const month = records.filter((record) => new Date(record.date) >= startMonth).length;
   const usage = records.reduce((map, record) => {
     const name = record.name || "Remédio";
     map[name] = (map[name] || 0) + 1;
@@ -1171,8 +1210,8 @@ function renderMedicineStats(records) {
   const mostUsed = Object.entries(usage).sort((a, b) => b[1] - a[1])[0];
   const stats = [
     ["💊 Doses hoje", today],
-    ["💊 Doses esta semana", week],
-    ["💊 Doses este mês", month],
+    ["✅ Tomadas", records.filter((record) => record.taken === "yes").length],
+    ["❌ Não tomadas", records.filter((record) => record.taken === "no").length],
     ["📊 Mais utilizado", mostUsed ? `${mostUsed[0]} (${mostUsed[1]})` : "--"]
   ];
   $("#medicineStats").innerHTML = stats.map(([label, value]) => `
@@ -1202,7 +1241,7 @@ function renderMedicineHistory(records) {
           <div>
             <strong>${esc(record.name || "Remédio")}</strong>
             <span>${esc(formatClock(record.date))} · ${esc(record.dose || "Quantidade não informada")}</span>
-            <small>Intervalo: ${esc(medicineIntervalLabel(record))} · Próxima dose: ${esc(formatFullDateTime(medicineNextDate(record)))}${record.note ? ` · ${esc(record.note)}` : ""}</small>
+            <small>${esc(record.taken === "yes" ? "Tomou: Sim" : record.taken === "no" ? "Tomou: Não" : "Tomou: não informado")} · Intervalo: ${esc(medicineIntervalLabel(record))} · Próxima dose: ${esc(formatFullDateTime(medicineNextDate(record)))}${record.note ? ` · ${esc(record.note)}` : ""}</small>
           </div>
           <div class="feed-history-actions">
             <button type="button" data-edit-medicine="${esc(record.id)}" aria-label="Editar remédio">✎</button>
@@ -1225,6 +1264,7 @@ function openMedicineEdit(id) {
   form.elements.date.value = dateOnly(record.date);
   form.elements.time.value = `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
   form.elements.intervalHours.value = record.intervalHours || 6;
+  form.elements.taken.value = record.taken || "";
   form.elements.note.value = record.note || "";
   form.classList.remove("hidden");
   form.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -1251,7 +1291,7 @@ function registerAppointment(data) {
     place: data.place,
     phone: data.phone,
     note: data.note,
-    date: `${data.date}T${data.time}`
+    date: dateTimeOrNow(data.date, data.time)
   });
   hideAppointmentForm();
   showAppointmentFeedback("✅ Consulta registrada com sucesso.");
@@ -1395,6 +1435,7 @@ function openGrowthEdit(id) {
   form.elements.date.value = dateOnly(record.date);
   form.elements.weight.value = record.weight || "";
   form.elements.height.value = record.height || "";
+  form.elements.head.value = record.head || "";
   form.classList.remove("hidden");
   form.scrollIntoView({ behavior: "smooth", block: "center" });
 }
@@ -1509,7 +1550,7 @@ function timelineDetail(record) {
     diaper: [record.diaperType, record.note],
     medicine: [record.dose, record.next ? `próximo ${formatDate(record.next)}` : ""],
     appointment: [record.place],
-    growth: [`${record.weight || "--"} kg`, `${record.height || "--"} cm`],
+    growth: [`${record.weight || "--"} kg`, `${record.height || "--"} cm`, `${record.head || "--"} cm perímetro`],
     pee: ["Xixi registrado rapidamente"],
     poop: ["Cocô registrado rapidamente"],
     sleep: ["Sono registrado rapidamente"]
@@ -1622,13 +1663,19 @@ function scheduleMedicineNotifications(baby) {
   medicineRecords(baby).forEach((record) => {
     const nextDate = medicineNextDate(record);
     [
-      [nextDate.getTime() - Date.now() - 60 * 60000, `💊 ${record.name || "Remédio"} em 1 hora.`],
-      [nextDate.getTime() - Date.now() - 30 * 60000, `💊 ${record.name || "Remédio"} em 30 minutos.`],
-      [nextDate.getTime() - Date.now() - 15 * 60000, `💊 ${record.name || "Remédio"} em 15 minutos.`],
-      [nextDate.getTime() - Date.now(), `✅ Hora de dar ${record.name || "o remédio"}.`]
-    ].forEach(([delay, message]) => {
+      [nextDate.getTime() - Date.now() - 60 * 60000, `💊 ${record.name || "Remédio"} em 1 hora.`, false],
+      [nextDate.getTime() - Date.now() - 30 * 60000, `💊 ${record.name || "Remédio"} em 30 minutos.`, false],
+      [nextDate.getTime() - Date.now() - 15 * 60000, `💊 ${record.name || "Remédio"} em 15 minutos.`, false],
+      [nextDate.getTime() - Date.now(), `O bebê tomou ${record.name || "este remédio"}?`, true]
+    ].forEach(([delay, message, shouldAsk]) => {
       if (delay <= 0 || delay > 2147483647) return;
       medicineNotificationTimers.push(window.setTimeout(() => {
+        if (shouldAsk) {
+          const taken = window.confirm(`${message}\n\nOK = Sim, tomou\nCancelar = Não tomou`);
+          updateRecord(record.id, { taken: taken ? "yes" : "no" });
+          toast(taken ? "✅ Dose marcada como tomada." : "⚠️ Dose marcada como não tomada.");
+          return;
+        }
         toast(message);
         if ("Notification" in window && Notification.permission === "granted") {
           new Notification("Meu Bebê", { body: message, icon: "assets/baby-clouds.png" });
@@ -1714,7 +1761,8 @@ function askConfirm(message) {
 
 function switchTab(tab) {
   $$(".view").forEach((view) => view.classList.toggle("active", view.dataset.view === tab));
-  $$(".tabbar button").forEach((button) => button.classList.toggle("active", button.dataset.tab === tab));
+  const activeTab = tab === "pee" ? "poop" : tab === "appointment" ? "medicine" : tab;
+  $$(".tabbar button").forEach((button) => button.classList.toggle("active", button.dataset.tab === activeTab));
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -1816,6 +1864,7 @@ function openMilkEdit(id) {
   form.elements.time.value = `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
   form.elements.date.value = date.toISOString().slice(0, 10);
   form.elements.amount.value = parseMl(record.amount) || "";
+  form.elements.side.value = record.side || "";
   form.elements.note.value = record.note || "";
   form.classList.remove("hidden");
   form.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -1853,7 +1902,7 @@ function setupForms() {
         diaper: { diaperType: data.type, note: data.note, date: data.date },
         medicine: { name: data.name || "Remédio", dose: data.dose, next: data.next, date: data.next },
         appointment: { doctor: data.doctor || "Consulta", place: data.place, date: data.date },
-        growth: { weight: cleanNumber(data.weight), height: cleanNumber(data.height), date: data.date }
+        growth: { weight: cleanNumber(data.weight), height: cleanNumber(data.height), head: cleanNumber(data.head), date: data.date || todayInput() }
       };
       const payload = payloads[type];
       if (type === "growth") {
@@ -1887,14 +1936,16 @@ function setupForms() {
     baby.birthDate = data.birthDate || "";
     baby.weight = cleanNumber(data.weight);
     baby.height = cleanNumber(data.height);
-    if (baby.weight || baby.height) {
+    const head = cleanNumber(data.head);
+    if (baby.weight || baby.height || head) {
       baby.records.unshift({
         id: crypto.randomUUID(),
         type: "growth",
         createdAt: new Date().toISOString(),
         date: todayInput(),
         weight: baby.weight,
-        height: baby.height
+        height: baby.height,
+        head
       });
     }
     localStorage.setItem(`${STORAGE_KEY}:welcomed`, "1");
@@ -1985,7 +2036,7 @@ function setupEvents() {
     const form = event.currentTarget;
     const data = Object.fromEntries(new FormData(form).entries());
     updateRecord(data.id, {
-      date: `${data.date}T${data.time}`,
+      date: dateTimeOrNow(data.date, data.time),
       feedType: data.feedType,
       note: data.note,
       amount: data.amount ? `${Math.round(Number(data.amount))} ml` : ""
@@ -2007,7 +2058,7 @@ function setupEvents() {
     event.preventDefault();
     const data = Object.fromEntries(new FormData(event.currentTarget).entries());
     const useOtherDate = $("#milkOtherDate").checked;
-    registerMilk(data.time, useOtherDate ? data.date : todayInput(), data.amount);
+    registerMilk(data.time, useOtherDate ? data.date : todayInput(), data.amount, data.side);
     event.currentTarget.reset();
     $("#milkOtherDate").checked = false;
     $("#milkDateWrap").classList.add("hidden");
@@ -2029,8 +2080,9 @@ function setupEvents() {
     event.preventDefault();
     const data = Object.fromEntries(new FormData(event.currentTarget).entries());
     updateRecord(data.id, {
-      date: `${data.date}T${data.time}`,
+      date: dateTimeOrNow(data.date, data.time),
       amount: data.amount ? `${Math.round(Number(data.amount))} ml` : "",
+      side: data.side,
       note: data.note
     });
     closeMilkEdit();
@@ -2113,6 +2165,9 @@ function setupEvents() {
     const form = event.currentTarget;
     const data = Object.fromEntries(new FormData(form).entries());
     const useOtherDate = $("#medicineOtherDate").checked;
+    if (!data.taken) {
+      data.taken = window.confirm("O bebê tomou este remédio?\n\nOK = Sim, tomou\nCancelar = Não tomou") ? "yes" : "no";
+    }
     registerMedicine({ ...data, date: useOtherDate ? data.date : todayInput() });
     form.reset();
     $("#medicineOtherDate").checked = false;
@@ -2132,12 +2187,13 @@ function setupEvents() {
   $("#medicineEditForm").addEventListener("submit", (event) => {
     event.preventDefault();
     const data = Object.fromEntries(new FormData(event.currentTarget).entries());
-    const date = `${data.date}T${data.time}`;
+    const date = dateTimeOrNow(data.date, data.time);
     const next = addTime(date, Number(data.intervalHours) * 60);
     updateRecord(data.id, {
       name: data.name,
       dose: data.dose,
       note: data.note,
+      taken: data.taken,
       intervalHours: Number(data.intervalHours),
       date,
       next: next?.toISOString()
@@ -2191,7 +2247,7 @@ function setupEvents() {
       place: data.place,
       phone: data.phone,
       note: data.note,
-      date: `${data.date}T${data.time}`
+      date: dateTimeOrNow(data.date, data.time)
     });
     closeAppointmentEdit();
     showAppointmentFeedback("✅ Consulta atualizada.");
@@ -2217,15 +2273,17 @@ function setupEvents() {
     const baby = activeBaby();
     const weight = cleanNumber(data.weight);
     const height = cleanNumber(data.height);
+    const head = cleanNumber(data.head);
     baby.weight = weight || baby.weight;
     baby.height = height || baby.height;
     baby.records.unshift({
       id: crypto.randomUUID(),
       type: "growth",
       createdAt: new Date().toISOString(),
-      date: data.date,
+      date: data.date || todayInput(),
       weight,
-      height
+      height,
+      head
     });
     event.currentTarget.reset();
     event.currentTarget.classList.add("hidden");
@@ -2245,7 +2303,8 @@ function setupEvents() {
     const data = Object.fromEntries(new FormData(event.currentTarget).entries());
     const weight = cleanNumber(data.weight);
     const height = cleanNumber(data.height);
-    updateRecord(data.id, { date: data.date, weight, height });
+    const head = cleanNumber(data.head);
+    updateRecord(data.id, { date: data.date || todayInput(), weight, height, head });
     const latest = growthRecords()[0];
     if (latest) {
       activeBaby().weight = latest.weight || activeBaby().weight;

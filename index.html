@@ -9,7 +9,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="assets/baby-clouds.png" type="image/png">
     <link rel="apple-touch-icon" href="assets/baby-clouds.png">
-    <link rel="stylesheet" href="style.css?v=13">
+    <link rel="stylesheet" href="style.css?v=15">
   </head>
   <body>
     <div class="splash" id="splash" aria-hidden="true">
@@ -76,6 +76,10 @@
 
           <section class="feed-summary-grid" aria-label="Resumo das mamadas">
             <article class="feed-summary-card">
+              <small>Último peito usado</small>
+              <strong id="feedLastBreast">--</strong>
+            </article>
+            <article class="feed-summary-card">
               <small>Próxima mamada</small>
               <strong id="feedNextTime">--:--</strong>
             </article>
@@ -115,7 +119,7 @@
             <form class="panel" id="manualFeedForm">
               <h3>Registro manual</h3>
               <label>🕒 Hora da mamada
-                <input name="time" type="time" required>
+                <input name="time" type="time">
               </label>
               <label class="inline-check">
                 <input id="manualFeedOtherDate" type="checkbox">
@@ -156,10 +160,10 @@
             <h3>Editar mamada</h3>
             <input name="id" type="hidden">
             <label>Horário
-              <input name="time" type="time" required>
+              <input name="time" type="time">
             </label>
             <label>Data
-              <input name="date" type="date" required>
+              <input name="date" type="date">
             </label>
             <label>Tipo
               <select name="feedType">
@@ -203,10 +207,18 @@
             <form class="panel hidden" id="milkForm">
               <h3>Nova retirada</h3>
               <label>🕒 Horário em que terminou de tirar leite
-                <input name="time" type="time" required>
+                <input name="time" type="time">
               </label>
               <label>🍼 Quantidade em ml
                 <input name="amount" type="number" min="0" step="1" placeholder="Opcional">
+              </label>
+              <label>Lado retirado
+                <select name="side">
+                  <option value="">Não informar</option>
+                  <option>Esquerdo</option>
+                  <option>Direito</option>
+                  <option>Ambos</option>
+                </select>
               </label>
               <label class="inline-check">
                 <input id="milkOtherDate" type="checkbox">
@@ -221,11 +233,6 @@
 
           <section class="milk-stats-grid" id="milkStats" aria-label="Estatísticas de leite materno"></section>
 
-          <section class="panel milk-relation-panel">
-            <h3>Relação com mamadas</h3>
-            <div class="milk-relation-grid" id="milkRelation"></div>
-          </section>
-
           <section class="panel feed-history-panel">
             <h3>Histórico de retiradas</h3>
             <div class="feed-history" id="milkHistory"></div>
@@ -235,13 +242,21 @@
             <h3>Editar retirada</h3>
             <input name="id" type="hidden">
             <label>Horário
-              <input name="time" type="time" required>
+              <input name="time" type="time">
             </label>
             <label>Data
-              <input name="date" type="date" required>
+              <input name="date" type="date">
             </label>
             <label>Quantidade em ml
               <input name="amount" type="number" min="0" step="1" placeholder="Opcional">
+            </label>
+            <label>Lado retirado
+              <select name="side">
+                <option value="">Não informar</option>
+                <option>Esquerdo</option>
+                <option>Direito</option>
+                <option>Ambos</option>
+              </select>
             </label>
             <label>Observações
               <input name="note" type="text" placeholder="Opcional">
@@ -260,6 +275,10 @@
           <div class="section-heading feed-heading">
             <h2>💩 Cocô</h2>
             <p>Acompanhe a rotina intestinal do seu bebê.</p>
+          </div>
+          <div class="subtab-row">
+            <button type="button" class="active" data-tab="poop">💩 Cocô</button>
+            <button type="button" data-tab="pee">💧 Xixi</button>
           </div>
 
           <section class="elimination-main-grid">
@@ -301,7 +320,7 @@
             <h3>Editar cocô</h3>
             <input name="id" type="hidden">
             <label>Data
-              <input name="date" type="date" required>
+              <input name="date" type="date">
             </label>
             <label>Quantidade
               <select name="count"></select>
@@ -322,6 +341,10 @@
           <div class="section-heading feed-heading">
             <h2>💧 Xixi</h2>
             <p>Acompanhe a quantidade de xixis do seu bebê.</p>
+          </div>
+          <div class="subtab-row">
+            <button type="button" data-tab="poop">💩 Cocô</button>
+            <button type="button" class="active" data-tab="pee">💧 Xixi</button>
           </div>
 
           <section class="elimination-main-grid">
@@ -363,7 +386,7 @@
             <h3>Editar xixi</h3>
             <input name="id" type="hidden">
             <label>Data
-              <input name="date" type="date" required>
+              <input name="date" type="date">
             </label>
             <label>Quantidade
               <select name="count"></select>
@@ -385,6 +408,12 @@
             <h2>💊 Remédios</h2>
             <p>Controle todos os medicamentos do seu bebê.</p>
           </div>
+          <div class="subtab-row">
+            <button type="button" class="active" data-tab="medicine">💊 Remédios</button>
+            <button type="button" data-tab="appointment">🩺 Consultas</button>
+            <button type="button" disabled>💉 Vacinas</button>
+            <button type="button" disabled>👨‍⚕️ Médicos</button>
+          </div>
 
           <section class="health-main-grid">
             <article class="panel feed-register-panel">
@@ -400,13 +429,13 @@
             <h3>Novo remédio</h3>
             <div class="form-grid compact-form-grid">
               <label>💊 Nome do remédio
-                <input name="name" type="text" placeholder="Ex: Vitamina D" required>
+                <input name="name" type="text" placeholder="Ex: Vitamina D">
               </label>
               <label>💉 Quantidade
                 <input name="dose" type="text" placeholder="Opcional">
               </label>
               <label>🕒 Hora em que foi administrado
-                <input name="time" type="time" required>
+                <input name="time" type="time">
               </label>
               <label class="inline-check">
                 <input id="medicineOtherDate" type="checkbox">
@@ -431,6 +460,13 @@
               <label>📝 Observações
                 <input name="note" type="text" placeholder="Opcional">
               </label>
+              <label>Tomou este remédio?
+                <select name="taken">
+                  <option value="">Perguntar ao salvar</option>
+                  <option value="yes">Sim, tomou</option>
+                  <option value="no">Não tomou</option>
+                </select>
+              </label>
             </div>
             <div class="button-row">
               <button type="submit">Salvar remédio</button>
@@ -449,22 +485,29 @@
             <h3>Editar remédio</h3>
             <input name="id" type="hidden">
             <label>Nome
-              <input name="name" type="text" required>
+              <input name="name" type="text">
             </label>
             <label>Quantidade
               <input name="dose" type="text" placeholder="Opcional">
             </label>
             <label>Data
-              <input name="date" type="date" required>
+              <input name="date" type="date">
             </label>
             <label>Horário
-              <input name="time" type="time" required>
+              <input name="time" type="time">
             </label>
             <label>Intervalo em horas
-              <input name="intervalHours" type="number" min="1" max="72" step="1" required>
+              <input name="intervalHours" type="number" min="1" max="72" step="1">
             </label>
             <label>Observações
               <input name="note" type="text" placeholder="Opcional">
+            </label>
+            <label>Tomou este remédio?
+              <select name="taken">
+                <option value="">Não informado</option>
+                <option value="yes">Sim, tomou</option>
+                <option value="no">Não tomou</option>
+              </select>
             </label>
             <div class="button-row">
               <button type="submit">Salvar edição</button>
@@ -480,6 +523,12 @@
           <div class="section-heading feed-heading">
             <h2>🩺 Consultas</h2>
             <p>Organize todas as consultas do seu bebê.</p>
+          </div>
+          <div class="subtab-row">
+            <button type="button" data-tab="medicine">💊 Remédios</button>
+            <button type="button" class="active" data-tab="appointment">🩺 Consultas</button>
+            <button type="button" disabled>💉 Vacinas</button>
+            <button type="button" disabled>👨‍⚕️ Médicos</button>
           </div>
 
           <section class="health-main-grid">
@@ -507,13 +556,13 @@
                 <input name="otherDoctor" type="text" placeholder="Ex: Cardiologista">
               </label>
               <label>📅 Data
-                <input name="date" type="date" required>
+                <input name="date" type="date">
               </label>
               <label>🕒 Horário
-                <input name="time" type="time" required>
+                <input name="time" type="time">
               </label>
               <label>📍 Local
-                <input name="place" type="text" placeholder="Centro de Saúde" required>
+                <input name="place" type="text" placeholder="Centro de Saúde">
               </label>
               <label>☎️ Telefone
                 <input name="phone" type="tel" placeholder="Opcional">
@@ -543,16 +592,16 @@
             <h3>Editar consulta</h3>
             <input name="id" type="hidden">
             <label>Especialidade
-              <input name="doctor" type="text" required>
+              <input name="doctor" type="text">
             </label>
             <label>Data
-              <input name="date" type="date" required>
+              <input name="date" type="date">
             </label>
             <label>Horário
-              <input name="time" type="time" required>
+              <input name="time" type="time">
             </label>
             <label>Local
-              <input name="place" type="text" required>
+              <input name="place" type="text">
             </label>
             <label>Telefone
               <input name="phone" type="tel" placeholder="Opcional">
@@ -667,6 +716,9 @@
               <label>Tamanho atual (cm)
                 <input name="height" type="number" min="0" step="0.1" placeholder="Ex: 62">
               </label>
+              <label>Perímetro cefálico (cm)
+                <input name="head" type="number" min="0" step="0.1" placeholder="Ex: 40">
+              </label>
               <label>Data da medição
                 <input name="date" type="date">
               </label>
@@ -706,7 +758,7 @@
             <form class="panel profile-form" id="profileForm">
               <h3>Dados do bebê</h3>
               <label>👶🏽 Nome
-                <input name="name" type="text" required>
+                <input name="name" type="text">
               </label>
               <label class="file-button profile-photo-button">🖼️ Alterar foto
                 <input id="profilePhotoInput" type="file" accept="image/*">
@@ -742,7 +794,7 @@
             <h3>Vamos cadastrar o seu bebê</h3>
             <form id="welcomeForm" class="compact-form-grid">
               <label>Nome
-                <input name="name" type="text" required placeholder="Nome do bebê">
+                <input name="name" type="text" placeholder="Nome do bebê">
               </label>
               <label>Data de nascimento
                 <input name="birthDate" type="date">
@@ -752,6 +804,9 @@
               </label>
               <label>Tamanho inicial (cm)
                 <input name="height" type="number" min="0" step="0.1">
+              </label>
+              <label>Perímetro cefálico inicial (cm)
+                <input name="head" type="number" min="0" step="0.1">
               </label>
               <button type="submit">Salvar bebê</button>
             </form>
@@ -764,13 +819,16 @@
             </div>
             <form class="compact-form-grid hidden" id="growthForm">
               <label>Data
-                <input name="date" type="date" required>
+                <input name="date" type="date">
               </label>
               <label>Peso (kg)
-                <input name="weight" type="number" min="0" step="0.01" required>
+                <input name="weight" type="number" min="0" step="0.01">
               </label>
               <label>Tamanho (cm)
-                <input name="height" type="number" min="0" step="0.1" required>
+                <input name="height" type="number" min="0" step="0.1">
+              </label>
+              <label>Perímetro cefálico (cm)
+                <input name="head" type="number" min="0" step="0.1">
               </label>
               <div class="button-row">
                 <button type="submit">Salvar medição</button>
@@ -784,6 +842,7 @@
                     <th>Data</th>
                     <th>Peso</th>
                     <th>Tamanho</th>
+                    <th>Perímetro</th>
                     <th>Evolução</th>
                     <th></th>
                   </tr>
@@ -796,9 +855,9 @@
           <section class="panel elimination-chart-panel">
             <h3>Gráficos de crescimento</h3>
             <div class="charts-grid">
-              <div><h4>📈 Evolução do peso</h4><div class="bar-chart" id="weightChart"></div></div>
-              <div><h4>📈 Evolução da altura</h4><div class="bar-chart" id="heightChart"></div></div>
-              <div><h4>📈 Crescimento mensal</h4><div class="bar-chart" id="monthlyGrowthChart"></div></div>
+              <div><h4>📈 Peso</h4><div class="line-chart" id="weightChart"></div></div>
+              <div><h4>📈 Altura</h4><div class="line-chart" id="heightChart"></div></div>
+              <div><h4>📈 Perímetro cefálico</h4><div class="line-chart" id="headChart"></div></div>
             </div>
           </section>
 
@@ -806,13 +865,16 @@
             <h3>Editar medição</h3>
             <input name="id" type="hidden">
             <label>Data
-              <input name="date" type="date" required>
+              <input name="date" type="date">
             </label>
             <label>Peso (kg)
-              <input name="weight" type="number" min="0" step="0.01" required>
+              <input name="weight" type="number" min="0" step="0.01">
             </label>
             <label>Tamanho (cm)
-              <input name="height" type="number" min="0" step="0.1" required>
+              <input name="height" type="number" min="0" step="0.1">
+            </label>
+            <label>Perímetro cefálico (cm)
+              <input name="head" type="number" min="0" step="0.1">
             </label>
             <div class="button-row">
               <button type="submit">Salvar edição</button>
@@ -871,10 +933,8 @@
         <button class="active" type="button" data-tab="home"><span>⌂</span>Início</button>
         <button type="button" data-tab="feed"><span>🍼</span>Mamadas</button>
         <button type="button" data-tab="milk"><span>🤱</span>Leite</button>
-        <button type="button" data-tab="poop"><span>💩</span>Cocô</button>
-        <button type="button" data-tab="pee"><span>💧</span>Xixi</button>
-        <button type="button" data-tab="medicine"><span>💊</span>Remédios</button>
-        <button type="button" data-tab="appointment"><span>🩺</span>Médico</button>
+        <button type="button" data-tab="poop"><span>☁️</span>Fraldas</button>
+        <button type="button" data-tab="medicine"><span>🏥</span>Saúde</button>
         <button type="button" data-tab="profile"><span>👶🏽</span>Perfil</button>
       </nav>
     </div>
@@ -887,6 +947,6 @@
       <option value="Outra observação"></option>
     </datalist>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="script.js?v=13"></script>
+    <script src="script.js?v=15"></script>
   </body>
 </html>
