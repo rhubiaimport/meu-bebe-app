@@ -134,17 +134,18 @@ body:not([data-current-view="home"]) .app-shell {
 .topbar {
   width: min(1180px, 100%);
   margin: 0 auto 18px;
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
 }
 
-body:not([data-current-view="home"]) .topbar {
-  display: none;
+body[data-current-view="home"] .topbar {
+  display: flex;
 }
 
-body:not([data-current-view="home"]) .auth-panel {
+body:not([data-current-view="home"]) .auth-panel,
+body:not([data-current-view]) .auth-panel {
   display: none;
 }
 

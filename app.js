@@ -44,6 +44,8 @@ const typeMeta = {
   diaper: { label: "Fralda", icon: "☁" },
   medicine: { label: "Remédio", icon: "💊" },
   appointment: { label: "Consulta", icon: "🩺" },
+  vaccine: { label: "Vacina", icon: "💉" },
+  doctor: { label: "Médico", icon: "👨‍⚕️" },
   growth: { label: "Crescimento", icon: "📏" },
   pee: { label: "Xixi", icon: "💧" },
   poop: { label: "Cocô", icon: "☁" },
@@ -914,6 +916,8 @@ function render() {
   renderEliminationView("pee", baby);
   renderMedicineView(baby);
   renderAppointmentView(baby);
+  renderVaccineView(baby);
+  renderDoctorView(baby);
   renderTimeline(baby);
   renderProfiles();
   renderAlerts(baby);
@@ -1952,6 +1956,91 @@ function closeAppointmentEdit() {
   $("#appointmentEditForm").reset();
 }
 
+function healthRecords(type, baby = activeBaby()) {
+  return baby.records.filter((record) => record.type === type).sort(sortByDateDesc);
+}
+
+function showHealthFeedback(selector, message) {
+  const feedback = $(selector);
+  if (!feedback) return;
+  feedback.textContent = message;
+  feedback.classList.add("show");
+  window.clearTimeout(feedback.timer);
+  feedback.timer = window.setTimeout(() => feedback.classList.remove("show"), 2400);
+}
+
+function renderVaccineView(baby) {
+  const records = healthRecords("vaccine", baby);
+  const nextDose = records
+    .filter((record) => record.nextDose && new Date(`${record.nextDose}T12:00`) >= new Date())
+    .sort((a, b) => new Date(`${a.nextDose}T12:00`) - new Date(`${b.nextDose}T12:00`))[0];
+  $("#vaccineSummary").innerHTML = [
+    ["💉 Vacinas", records.length],
+    ["📅 Próxima dose", nextDose ? formatOnlyDate(`${nextDose.nextDose}T12:00`) : "--/--/----"]
+  ].map(([label, value]) => `
+    <article class="feed-summary-card">
+      <small>${esc(label)}</small>
+      <strong>${esc(value)}</strong>
+    </article>
+  `).join("");
+  $("#vaccineHistory").innerHTML = records.length ? records.map((record) => `
+    <article class="feed-history-item">
+      <div>
+        <strong>${esc(record.name || "Vacina")}</strong>
+        <span>${esc(formatOnlyDate(record.date))}${record.nextDose ? ` · Próxima: ${esc(formatOnlyDate(`${record.nextDose}T12:00`))}` : ""}</span>
+        <small>${esc(record.place || "Local não informado")}${record.note ? ` · ${esc(record.note)}` : ""}</small>
+      </div>
+      <div class="feed-history-actions">
+        <button type="button" data-delete-vaccine="${esc(record.id)}" aria-label="Excluir vacina">×</button>
+      </div>
+    </article>
+  `).join("") : `<div class="empty">Nenhuma vacina cadastrada ainda.</div>`;
+}
+
+function renderDoctorView(baby) {
+  const records = healthRecords("doctor", baby);
+  $("#doctorSummary").innerHTML = [
+    ["👨‍⚕️ Médicos", records.length],
+    ["📞 Com telefone", records.filter((record) => record.phone).length]
+  ].map(([label, value]) => `
+    <article class="feed-summary-card">
+      <small>${esc(label)}</small>
+      <strong>${esc(value)}</strong>
+    </article>
+  `).join("");
+  $("#doctorHistory").innerHTML = records.length ? records.map((record) => `
+    <article class="feed-history-item">
+      <div>
+        <strong>${esc(record.name || "Médico")}</strong>
+        <span>${esc(record.specialty || "Especialidade não informada")}</span>
+        <small>${esc(record.phone || "Telefone não informado")}${record.place ? ` · ${esc(record.place)}` : ""}${record.note ? ` · ${esc(record.note)}` : ""}</small>
+      </div>
+      <div class="feed-history-actions">
+        <button type="button" data-delete-doctor="${esc(record.id)}" aria-label="Excluir médico">×</button>
+      </div>
+    </article>
+  `).join("") : `<div class="empty">Nenhum médico cadastrado ainda.</div>`;
+}
+
+function showVaccineForm() {
+  $("#vaccineForm").classList.remove("hidden");
+  setDefaultDateFields($("#vaccineForm"));
+  $("#vaccineForm").scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function hideVaccineForm() {
+  $("#vaccineForm").classList.add("hidden");
+}
+
+function showDoctorForm() {
+  $("#doctorForm").classList.remove("hidden");
+  $("#doctorForm").scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function hideDoctorForm() {
+  $("#doctorForm").classList.add("hidden");
+}
+
 function openGrowthEdit(id) {
   const record = findRecord(id);
   if (!record) return;
@@ -2317,6 +2406,7 @@ function switchTab(tab) {
   document.body.dataset.currentView = tab;
   const activeTab = tab === "pee" ? "poop" : ["appointment", "vaccine", "doctor"].includes(tab) ? "medicine" : tab;
   $$(".tabbar button").forEach((button) => button.classList.toggle("active", button.dataset.tab === activeTab));
+  $$(".subtab-row button[data-health-tab]").forEach((button) => button.classList.toggle("active", button.dataset.healthTab === tab));
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -2513,8 +2603,8 @@ function setupEvents() {
     button.addEventListener("click", () => switchTab(button.dataset.tab));
   });
 
-  $$(".subtab-row button[data-tab]").forEach((button) => {
-    button.addEventListener("click", () => switchTab(button.dataset.tab));
+  $$(".subtab-row button[data-health-tab]").forEach((button) => {
+    button.addEventListener("click", () => switchTab(button.dataset.healthTab));
   });
 
   $("#settingsShortcut").addEventListener("click", () => switchTab("tools"));
@@ -2821,6 +2911,57 @@ function setupEvents() {
     showAppointmentFeedback("✅ Consulta atualizada.");
   });
   $("#cancelAppointmentEdit").addEventListener("click", closeAppointmentEdit);
+
+  $("#openVaccineForm").addEventListener("click", showVaccineForm);
+  $("#cancelVaccineForm").addEventListener("click", hideVaccineForm);
+  $("#vaccineForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const data = Object.fromEntries(new FormData(form).entries());
+    addRecord("vaccine", {
+      name: data.name || "Vacina",
+      nextDose: data.nextDose,
+      place: data.place,
+      note: data.note,
+      date: data.date ? `${data.date}T12:00` : new Date().toISOString()
+    });
+    form.reset();
+    hideVaccineForm();
+    showHealthFeedback("#vaccineFeedback", "✅ Vacina registrada.");
+  });
+  $("#vaccineHistory").addEventListener("click", async (event) => {
+    const deleteButton = event.target.closest("[data-delete-vaccine]");
+    if (deleteButton && await askConfirm("Deseja realmente excluir esta vacina?")) {
+      removeRecord(deleteButton.dataset.deleteVaccine);
+      showHealthFeedback("#vaccineFeedback", "✅ Vacina excluída.");
+    }
+  });
+
+  $("#openDoctorForm").addEventListener("click", showDoctorForm);
+  $("#cancelDoctorForm").addEventListener("click", hideDoctorForm);
+  $("#doctorForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const data = Object.fromEntries(new FormData(form).entries());
+    addRecord("doctor", {
+      name: data.name || "Médico",
+      specialty: data.specialty,
+      phone: data.phone,
+      place: data.place,
+      note: data.note,
+      date: new Date().toISOString()
+    });
+    form.reset();
+    hideDoctorForm();
+    showHealthFeedback("#doctorFeedback", "✅ Médico registrado.");
+  });
+  $("#doctorHistory").addEventListener("click", async (event) => {
+    const deleteButton = event.target.closest("[data-delete-doctor]");
+    if (deleteButton && await askConfirm("Deseja realmente excluir este médico?")) {
+      removeRecord(deleteButton.dataset.deleteDoctor);
+      showHealthFeedback("#doctorFeedback", "✅ Médico excluído.");
+    }
+  });
 
   $("#timeline").addEventListener("click", (event) => {
     const button = event.target.closest("[data-remove]");
