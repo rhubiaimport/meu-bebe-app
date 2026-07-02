@@ -3,6 +3,7 @@ const STORAGE_SCHEMA_VERSION = 2;
 const BACKUP_KEY_PREFIX = "meu-bebe:backup:";
 const FIREBASE_CONFIG = window.MEU_BEBE_FIREBASE_CONFIG || {};
 const FIREBASE_CDN_VERSION = "10.12.5";
+const CLOUD_CLIENT_ID = crypto.randomUUID();
 const LEGACY_STORAGE_KEYS = [
   "meu-bebe",
   "meu-bebe-app",
@@ -96,6 +97,7 @@ let cloudSyncReady = false;
 let applyingRemoteState = false;
 let cloudSaveTimer = null;
 let lastCloudSavedJson = "";
+let cloudUnsubscribe = null;
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
@@ -385,7 +387,13 @@ function requestPersistentStorage() {
 }
 
 function hasFirebaseConfig() {
-  return Boolean(FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.authDomain && FIREBASE_CONFIG.projectId && FIREBASE_CONFIG.appId);
+  return Boolean(
+    FIREBASE_CONFIG.apiKey &&
+    FIREBASE_CONFIG.authDomain &&
+    FIREBASE_CONFIG.projectId &&
+    FIREBASE_CONFIG.appId &&
+    !String(FIREBASE_CONFIG.apiKey).startsWith("__")
+  );
 }
 
 function stateHasMeaningfulData(data) {
@@ -417,10 +425,11 @@ function renderAuthPanel() {
   const status = $("#authStatus");
 
   if (!hasFirebaseConfig()) {
-    title.textContent = "Login Google aguardando configuração";
-    status.textContent = "Preencha firebase-config.js com os dados públicos do seu projeto Firebase para ativar a sincronização.";
-    loginButton.disabled = true;
+    title.textContent = "Entrar para proteger seus dados";
+    status.textContent = "A sincronização com Google será ativada assim que as variáveis do Firebase estiverem disponíveis no deploy.";
+    loginButton.disabled = false;
     loginButton.textContent = "Entrar com Google";
+    loginButton.classList.remove("hidden");
     logoutButton.classList.add("hidden");
     return;
   }
@@ -462,6 +471,7 @@ async function initFirebaseAuth() {
       doc: firestoreModule.doc,
       getDoc: firestoreModule.getDoc,
       setDoc: firestoreModule.setDoc,
+      onSnapshot: firestoreModule.onSnapshot,
       serverTimestamp: firestoreModule.serverTimestamp
     };
     firebaseReady = true;
@@ -497,10 +507,42 @@ async function saveCloudStateNow() {
     schemaVersion: STORAGE_SCHEMA_VERSION,
     ownerUid: authUser.uid,
     ownerEmail: authUser.email || "",
+    lastUpdatedBy: CLOUD_CLIENT_ID,
     updatedAt: firebaseServices.serverTimestamp(),
     state: repairState(state)
   }, { merge: true });
   lastCloudSavedJson = json;
+}
+
+function stopCloudListener() {
+  if (typeof cloudUnsubscribe === "function") cloudUnsubscribe();
+  cloudUnsubscribe = null;
+}
+
+function startCloudListener() {
+  stopCloudListener();
+  const ref = userDocRef(authUser?.uid);
+  if (!ref || !firebaseServices?.onSnapshot) return;
+  cloudUnsubscribe = firebaseServices.onSnapshot(ref, (snapshot) => {
+    if (!snapshot.exists() || applyingRemoteState || !cloudSyncReady) return;
+    const remoteData = unwrapStoredData(snapshot.data());
+    if (!remoteData) return;
+    const remoteJson = stateJson(remoteData);
+    if (remoteJson === stateJson(state)) {
+      lastCloudSavedJson = remoteJson;
+      return;
+    }
+    preserveLocalBackup("antes-sync-remoto", localStorage.getItem(activeStorageKey));
+    applyingRemoteState = true;
+    state = repairState(remoteData);
+    localStorage.setItem(activeStorageKey, JSON.stringify(state));
+    lastCloudSavedJson = remoteJson;
+    applyingRemoteState = false;
+    render();
+    toast("Dados sincronizados da conta Google");
+  }, () => {
+    toast("Sincronização em tempo real pausada. Dados locais continuam salvos.");
+  });
 }
 
 function scheduleCloudSave() {
@@ -516,6 +558,7 @@ async function handleAuthStateChanged(user) {
   cloudSyncReady = false;
   renderAuthPanel();
   if (!user) {
+    stopCloudListener();
     activeStorageKey = STORAGE_KEY;
     state = loadState();
     lastCloudSavedJson = "";
@@ -536,14 +579,28 @@ async function handleAuthStateChanged(user) {
     const cloudHasData = cloudState && stateHasMeaningfulData(cloudState);
     const accountHasData = sourceCloudState && stateHasMeaningfulData(sourceCloudState);
     const sameData = sourceCloudState && stateJson(localState) === stateJson(sourceCloudState);
+    const importDecisionKey = `${activeStorageKey}:local-import-decision`;
+    const alreadyDecidedImport = localStorage.getItem(importDecisionKey);
 
-    if (localHasData && (!accountHasData || !sameData)) {
-      const importLocal = await askConfirm("Deseja importar seus dados antigos para esta conta?");
+    if (alreadyDecidedImport === "skipped" && !accountHasData) {
+      applyingRemoteState = true;
+      state = repairState(initialState);
+      localStorage.setItem(activeStorageKey, JSON.stringify(state));
+      applyingRemoteState = false;
+      cloudSyncReady = true;
+      await saveCloudStateNow();
+      startCloudListener();
+      render();
+      toast("Conta Google iniciada sem importar dados locais antigos.");
+    } else if (localHasData && !alreadyDecidedImport && (!accountHasData || !sameData)) {
+      const importLocal = await askConfirm("Encontramos dados salvos neste dispositivo. Deseja importá-los para sua conta Google?");
+      localStorage.setItem(importDecisionKey, importLocal ? "imported" : "skipped");
       if (importLocal) {
         state = repairState(localState);
         cloudSyncReady = true;
         await saveCloudStateNow();
         localStorage.setItem(activeStorageKey, JSON.stringify(state));
+        startCloudListener();
         toast("Dados antigos importados para sua conta Google");
       } else if (accountHasData) {
         applyingRemoteState = true;
@@ -552,6 +609,7 @@ async function handleAuthStateChanged(user) {
         applyingRemoteState = false;
         cloudSyncReady = true;
         lastCloudSavedJson = stateJson(state);
+        startCloudListener();
         render();
         toast("Conta Google carregada sem apagar o backup local");
       } else {
@@ -561,6 +619,7 @@ async function handleAuthStateChanged(user) {
         applyingRemoteState = false;
         cloudSyncReady = true;
         await saveCloudStateNow();
+        startCloudListener();
         render();
         toast("Conta Google iniciada. Seus dados antigos ficaram preservados em backup local.");
       }
@@ -572,11 +631,13 @@ async function handleAuthStateChanged(user) {
       cloudSyncReady = true;
       lastCloudSavedJson = cloudState ? stateJson(state) : "";
       if (!cloudState) await saveCloudStateNow();
+      startCloudListener();
       render();
       toast("Dados da conta Google carregados");
     } else {
       cloudSyncReady = true;
       await saveCloudStateNow();
+      startCloudListener();
       toast("Conta Google conectada");
     }
   } catch {
@@ -2897,7 +2958,7 @@ function setupEvents() {
 
   $("#googleLoginButton").addEventListener("click", async () => {
     if (!firebaseReady || !firebaseServices) {
-      toast("Configure o Firebase para ativar o login Google");
+      toast("Login Google indisponível neste deploy. Seus dados locais continuam protegidos.");
       return;
     }
     try {
