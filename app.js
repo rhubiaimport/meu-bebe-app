@@ -1,9 +1,19 @@
 const STORAGE_KEY = "meu-bebe:v1";
+const STORAGE_SCHEMA_VERSION = 2;
+const BACKUP_KEY_PREFIX = "meu-bebe:backup:";
+const LEGACY_STORAGE_KEYS = [
+  "meu-bebe",
+  "meu-bebe-app",
+  "meu-bebe:data",
+  "meu-bebe:v0",
+  "meu-bebe:v1"
+];
 const DEFAULT_FEED_INTERVAL_HOURS = 3;
 
 // Estado central do app. No futuro, esta camada pode ser trocada por login,
 // API e banco online sem mudar a interface nem os formulários.
 const initialState = {
+  schemaVersion: STORAGE_SCHEMA_VERSION,
   activeBabyId: "baby-1",
   settings: {
     visualAlerts: true,
@@ -90,31 +100,188 @@ function esc(value) {
 }
 
 function loadState() {
+  const candidates = findStoredStateCandidates();
   try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (!saved || !Array.isArray(saved.babies)) return structuredClone(initialState);
-    return repairState(saved);
+    const best = candidates[0];
+    if (!best) {
+      const backup = latestReadableBackup();
+      return backup ? repairState(backup) : structuredClone(initialState);
+    }
+    if (best.key !== STORAGE_KEY || best.needsMigration) {
+      preserveLocalBackup(`migração-${best.key}`, best.raw);
+    }
+    const repaired = repairState(best.data);
+    repaired.schemaVersion = STORAGE_SCHEMA_VERSION;
+    return repaired;
   } catch {
-    return structuredClone(initialState);
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) preserveLocalBackup("recuperação-dados-invalidos", raw);
+    const backup = latestReadableBackup();
+    return backup ? repairState(backup) : structuredClone(initialState);
   }
+}
+
+function safeJsonParse(raw) {
+  if (!raw || typeof raw !== "string") return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function migrationScore(data) {
+  if (!data) return 0;
+  const stateLike = data.state || data.data || data;
+  if (Array.isArray(stateLike.babies)) {
+    return 1000 + stateLike.babies.reduce((total, baby) => total + (Array.isArray(baby.records) ? baby.records.length : 0), 0);
+  }
+  if (stateLike.baby || stateLike.profile || stateLike.records) return 500 + (Array.isArray(stateLike.records) ? stateLike.records.length : 0);
+  return 0;
+}
+
+function unwrapStoredData(data) {
+  if (!data) return null;
+  if (data.state) return data.state;
+  if (data.data) return data.data;
+  if (data.payload) return data.payload;
+  return data;
+}
+
+function findStoredStateCandidates() {
+  const keys = new Set([STORAGE_KEY, ...LEGACY_STORAGE_KEYS]);
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index);
+    if (key && key.toLowerCase().includes("meu-bebe") && !key.startsWith(BACKUP_KEY_PREFIX)) keys.add(key);
+  }
+  return Array.from(keys)
+    .map((key) => {
+      const raw = localStorage.getItem(key);
+      const parsed = safeJsonParse(raw);
+      const data = unwrapStoredData(parsed);
+      return {
+        key,
+        raw,
+        data,
+        needsMigration: key !== STORAGE_KEY || !data?.schemaVersion || data.schemaVersion < STORAGE_SCHEMA_VERSION,
+        score: migrationScore(data)
+      };
+    })
+    .filter((item) => item.raw && item.data && item.score > 0)
+    .sort((a, b) => b.score - a.score);
+}
+
+function preserveLocalBackup(reason = "automático", raw = localStorage.getItem(STORAGE_KEY)) {
+  if (!raw) return;
+  const timestamp = new Date().toISOString();
+  const key = `${BACKUP_KEY_PREFIX}${timestamp}`;
+  try {
+    localStorage.setItem(key, JSON.stringify({
+      schemaVersion: STORAGE_SCHEMA_VERSION,
+      reason,
+      createdAt: timestamp,
+      sourceKey: STORAGE_KEY,
+      raw
+    }));
+    pruneLocalBackups();
+  } catch {
+    // Se o dispositivo estiver sem espaço, preservamos os dados principais e evitamos interromper o app.
+  }
+}
+
+function localBackupKeys() {
+  const keys = [];
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index);
+    if (key?.startsWith(BACKUP_KEY_PREFIX)) keys.push(key);
+  }
+  return keys.sort().reverse();
+}
+
+function pruneLocalBackups() {
+  localBackupKeys().slice(8).forEach((key) => localStorage.removeItem(key));
+}
+
+function latestReadableBackup() {
+  for (const key of localBackupKeys()) {
+    const wrapper = safeJsonParse(localStorage.getItem(key));
+    const data = safeJsonParse(wrapper?.raw) || unwrapStoredData(wrapper);
+    if (migrationScore(data) > 0) return data;
+  }
+  return null;
+}
+
+function normalizeRecord(record) {
+  if (!record || typeof record !== "object") return null;
+  const type = record.type || record.kind || record.category;
+  if (!type) return null;
+  return {
+    id: record.id || crypto.randomUUID(),
+    createdAt: record.createdAt || record.date || new Date().toISOString(),
+    date: record.date || record.createdAt || record.next || record.expires || new Date().toISOString(),
+    ...record,
+    type
+  };
+}
+
+function normalizeLegacyState(data) {
+  const source = unwrapStoredData(data) || {};
+  if (Array.isArray(source.babies)) return source;
+
+  const babySource = source.baby || source.profile || source;
+  const legacyRecords = (type, list) => (Array.isArray(list) ? list.map((record) => ({ type, ...record })) : []);
+  const records = []
+    .concat(legacyRecords("", source.records))
+    .concat(legacyRecords("feed", source.feedings || source.feeds || source.mamadas))
+    .concat(legacyRecords("milk", source.milk || source.leite))
+    .concat(legacyRecords("growth", source.growth || source.crescimento))
+    .concat(legacyRecords("medicine", source.medicines || source.remedios))
+    .concat(legacyRecords("medicine", source.doses))
+    .concat(legacyRecords("appointment", source.appointments || source.consultas))
+    .concat(legacyRecords("doctor", source.doctors || source.medicos))
+    .concat(legacyRecords("vaccine", source.vaccines || source.vacinas))
+    .concat(legacyRecords("poop", source.poop || source.coco))
+    .concat(legacyRecords("pee", source.pee || source.xixi));
+
+  return {
+    ...source,
+    activeBabyId: babySource.id || source.activeBabyId || "baby-1",
+    settings: source.settings || source.configuracoes || {},
+    babies: [{
+      ...babySource,
+      id: babySource.id || source.activeBabyId || "baby-1",
+      name: babySource.name || babySource.nome || "Bebê",
+      birthDate: babySource.birthDate || babySource.nascimento || babySource.dataNascimento || "",
+      sex: babySource.sex || babySource.sexo || "",
+      weight: babySource.weight || babySource.peso || "",
+      height: babySource.height || babySource.tamanho || babySource.altura || "",
+      photo: babySource.photo || babySource.foto || "assets/baby-clouds.png",
+      settings: babySource.settings || {},
+      records
+    }]
+  };
 }
 
 // Corrige dados incompletos ou antigos antes de salvar/renderizar.
 function repairState(data) {
+  data = normalizeLegacyState(data);
   const repaired = {
     ...structuredClone(initialState),
     ...data,
+    schemaVersion: STORAGE_SCHEMA_VERSION,
     settings: { ...initialState.settings, ...(data.settings || {}) },
     babies: (data.babies || []).filter(Boolean).map((baby, index) => ({
+      ...baby,
       id: baby.id || crypto.randomUUID(),
-      name: String(baby.name || `Bebê ${index + 1}`).trim(),
-      birthDate: baby.birthDate || "",
-      sex: baby.sex || "",
-      weight: cleanNumber(baby.weight),
-      height: cleanNumber(baby.height),
-      photo: baby.photo || "assets/baby-clouds.png",
+      name: String(baby.name || baby.nome || `Bebê ${index + 1}`).trim(),
+      birthDate: baby.birthDate || baby.nascimento || baby.dataNascimento || "",
+      sex: baby.sex || baby.sexo || "",
+      weight: cleanNumber(baby.weight || baby.peso),
+      height: cleanNumber(baby.height || baby.tamanho || baby.altura),
+      head: cleanNumber(baby.head || baby.perimetroCefalico),
+      photo: baby.photo || baby.foto || "assets/baby-clouds.png",
       settings: { ...(baby.settings || {}) },
-      records: Array.isArray(baby.records) ? baby.records.filter((record) => record && record.type) : []
+      records: Array.isArray(baby.records) ? baby.records.map(normalizeRecord).filter(Boolean) : []
     }))
   };
 
@@ -155,8 +322,41 @@ function dateOnly(value) {
 
 function saveState() {
   state = repairState(state);
+  const previousRaw = localStorage.getItem(STORAGE_KEY);
+  if (previousRaw && previousRaw !== JSON.stringify(state)) preserveLocalBackup("antes-de-salvar", previousRaw);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   render();
+}
+
+function exportStateFile(filenamePrefix = "meu-bebe-backup") {
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    schemaVersion: STORAGE_SCHEMA_VERSION,
+    app: "Meu Bebê",
+    state: repairState(state),
+    localBackupCount: localBackupKeys().length
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${filenamePrefix}-${todayInput()}.json`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function restoreStateFromRaw(raw) {
+  const parsed = safeJsonParse(raw);
+  const data = unwrapStoredData(parsed);
+  if (!data || migrationScore(data) <= 0) throw new Error("invalid-backup");
+  preserveLocalBackup("antes-de-importar", localStorage.getItem(STORAGE_KEY));
+  state = repairState(data);
+  saveState();
+}
+
+function requestPersistentStorage() {
+  if (!navigator.storage?.persist) return;
+  navigator.storage.persist().catch(() => {});
 }
 
 function activeBaby() {
@@ -2465,15 +2665,33 @@ function setupEvents() {
     saveState();
   });
 
+  $("#makeLocalBackup").addEventListener("click", () => {
+    preserveLocalBackup("backup-manual", JSON.stringify(repairState(state)));
+    $("#backupStatus").textContent = `Último backup local criado em ${formatFullDateTime(new Date())}.`;
+    toast("Backup local criado");
+  });
+
+  $("#makeLocalBackupTools")?.addEventListener("click", () => $("#makeLocalBackup").click());
+
+  $("#restoreLocalBackup").addEventListener("click", async () => {
+    const backup = latestReadableBackup();
+    if (!backup) {
+      toast("Nenhum backup local encontrado");
+      return;
+    }
+    if (!await askConfirm("Restaurar o último backup local? Os dados atuais serão preservados em outro backup antes da restauração.")) return;
+    preserveLocalBackup("antes-de-restaurar", localStorage.getItem(STORAGE_KEY));
+    state = repairState(backup);
+    saveState();
+    $("#backupStatus").textContent = "Último backup local restaurado com segurança.";
+    toast("Backup restaurado");
+  });
+
+  $("#restoreLocalBackupTools")?.addEventListener("click", () => $("#restoreLocalBackup").click());
+
   $("#exportData").addEventListener("click", () => {
-    const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `meu-bebe-backup-${todayInput()}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-    toast("Backup exportado");
+    exportStateFile("meu-bebe-dados");
+    toast("Dados exportados");
   });
 
   $("#exportDataTools")?.addEventListener("click", () => $("#exportData").click());
@@ -2484,9 +2702,8 @@ function setupEvents() {
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        state = repairState(JSON.parse(reader.result));
-        saveState();
-        toast("Backup importado");
+        restoreStateFromRaw(reader.result);
+        toast("Dados importados sem apagar registros antigos");
       } catch {
         toast("Arquivo de backup inválido");
       }
@@ -2507,6 +2724,7 @@ function setupEvents() {
 function boot() {
   setupForms();
   setupEvents();
+  requestPersistentStorage();
   saveState();
   if (location.hash) {
     window.setTimeout(() => openHomeTarget(location.hash.replace("#", "")), 250);

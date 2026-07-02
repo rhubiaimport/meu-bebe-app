@@ -9,7 +9,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="assets/baby-clouds.png" type="image/png">
     <link rel="apple-touch-icon" href="assets/baby-clouds.png">
-    <link rel="stylesheet" href="style.css?v=16">
+    <link rel="stylesheet" href="style.css?v=17">
   </head>
   <body>
     <div class="splash" id="splash" aria-hidden="true">
@@ -904,11 +904,14 @@
             <h3>💾 Backup</h3>
             <p>O backup guarda perfil, rotina, histórico, crescimento e configurações offline.</p>
             <div class="button-row">
-              <button type="button" id="exportData">📤 Exportar Backup</button>
-              <label class="file-button">📥 Importar Backup
+              <button type="button" id="makeLocalBackup">💾 Fazer backup</button>
+              <button type="button" id="restoreLocalBackup">↩️ Restaurar backup</button>
+              <button type="button" id="exportData">📤 Exportar dados</button>
+              <label class="file-button">📥 Importar dados
                 <input type="file" id="importData" accept="application/json">
               </label>
             </div>
+            <small id="backupStatus">Backups automáticos protegem seus dados antes de migrações e importações.</small>
           </section>
 
           <section class="panel privacy-panel">
@@ -927,7 +930,9 @@
               <h3>Backup offline</h3>
               <p>Exporte todos os dados em JSON e importe novamente quando precisar.</p>
               <div class="button-row">
-                <button type="button" id="exportDataTools">Exportar backup</button>
+                <button type="button" id="makeLocalBackupTools">Fazer backup</button>
+                <button type="button" id="restoreLocalBackupTools">Restaurar backup</button>
+                <button type="button" id="exportDataTools">Exportar dados</button>
                 <label class="file-button">Importar
                   <input type="file" id="importDataTools" accept="application/json">
                 </label>
@@ -965,6 +970,6 @@
       <option value="Outra observação"></option>
     </datalist>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="script.js?v=16"></script>
+    <script src="script.js?v=17"></script>
   </body>
 </html>
