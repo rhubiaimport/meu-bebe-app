@@ -1,16 +1,17 @@
-const CACHE_NAME = "meu-bebe-offline-v17";
+const CACHE_NAME = "meu-bebe-offline-v18";
 const ASSETS = [
   "./",
   "./index.html",
-  "./style.css?v=17",
-  "./script.js?v=17",
+  "./style.css?v=18",
+  "./script.js?v=18",
+  "./firebase-config.js",
   "./storage.js",
   "./manifest.json",
   "./service-worker.js",
   "./widget.html",
   "./widget-data.json",
-  "./styles.css?v=17",
-  "./app.js?v=17",
+  "./styles.css?v=18",
+  "./app.js?v=18",
   "./manifest.webmanifest",
   "./assets/baby-clouds.png"
 ];

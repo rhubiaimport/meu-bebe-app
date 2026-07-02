@@ -9,7 +9,8 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="assets/baby-clouds.png" type="image/png">
     <link rel="apple-touch-icon" href="assets/baby-clouds.png">
-    <link rel="stylesheet" href="style.css?v=17">
+    <link rel="stylesheet" href="style.css?v=18">
+    <script src="firebase-config.js"></script>
   </head>
   <body>
     <div class="splash" id="splash" aria-hidden="true">
@@ -32,6 +33,18 @@
           <button class="icon-button" id="profileShortcut" type="button" aria-label="Perfil do Bebê">👤</button>
         </div>
       </header>
+
+      <section class="auth-panel" id="authPanel" aria-label="Conta Google">
+        <div>
+          <p class="eyebrow">Conta protegida</p>
+          <strong id="authTitle">Entrar para sincronizar</strong>
+          <small id="authStatus">Seus dados continuam salvos neste dispositivo até o login ser configurado.</small>
+        </div>
+        <div class="auth-actions">
+          <button type="button" id="googleLoginButton">Entrar com Google</button>
+          <button type="button" id="googleLogoutButton" class="hidden">Sair da conta</button>
+        </div>
+      </section>
 
       <main class="app-main">
         <section class="view active" id="view-home" data-view="home">
@@ -916,7 +929,7 @@
 
           <section class="panel privacy-panel">
             <h3>Privacidade e expansão futura</h3>
-            <p id="privacySummary">Tudo permanece salvo apenas neste dispositivo via LocalStorage. Cada bebê possui identificador único e histórico independente, preparado para login, sincronização e banco online futuramente.</p>
+            <p id="privacySummary">O app continua funcionando offline. Com Google Login configurado, cada conta sincroniza apenas seus próprios dados no Firestore em users/{uid}, mantendo backups locais antes de migrações e importações.</p>
           </section>
         </section>
 
@@ -970,6 +983,6 @@
       <option value="Outra observação"></option>
     </datalist>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="script.js?v=17"></script>
+    <script src="script.js?v=18"></script>
   </body>
 </html>

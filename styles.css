@@ -159,6 +159,56 @@ img {
   align-items: center;
 }
 
+.auth-panel {
+  width: min(1180px, 100%);
+  margin: 0 auto 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(230, 238, 242, 0.9);
+  box-shadow: 0 14px 30px rgba(90, 123, 138, 0.1);
+  backdrop-filter: blur(12px);
+}
+
+.auth-panel strong,
+.auth-panel small {
+  display: block;
+}
+
+.auth-panel strong {
+  color: var(--text);
+  font-size: 1.02rem;
+}
+
+.auth-panel small {
+  margin-top: 3px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.auth-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.auth-actions button {
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: 16px;
+  font-weight: 900;
+}
+
+.auth-actions button:disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+}
+
 .eyebrow {
   margin: 0 0 5px;
   color: var(--blue-strong);
@@ -1528,6 +1578,16 @@ form button,
 
   .topbar {
     align-items: flex-start;
+  }
+
+  .auth-panel {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .auth-actions,
+  .auth-actions button {
+    width: 100%;
   }
 
   .topbar-actions {

@@ -1,6 +1,8 @@
 const STORAGE_KEY = "meu-bebe:v1";
 const STORAGE_SCHEMA_VERSION = 2;
 const BACKUP_KEY_PREFIX = "meu-bebe:backup:";
+const FIREBASE_CONFIG = window.MEU_BEBE_FIREBASE_CONFIG || {};
+const FIREBASE_CDN_VERSION = "10.12.5";
 const LEGACY_STORAGE_KEYS = [
   "meu-bebe",
   "meu-bebe-app",
@@ -78,6 +80,7 @@ const eliminationConfig = {
   }
 };
 
+let activeStorageKey = STORAGE_KEY;
 let state = loadState();
 let pendingFeedId = null;
 let lastQuickFeedStamp = 0;
@@ -85,6 +88,14 @@ let feedNotificationTimers = [];
 let milkNotificationTimers = [];
 let medicineNotificationTimers = [];
 let appointmentNotificationTimers = [];
+let authUser = null;
+let firebaseReady = false;
+let firebaseUnavailableReason = "";
+let firebaseServices = null;
+let cloudSyncReady = false;
+let applyingRemoteState = false;
+let cloudSaveTimer = null;
+let lastCloudSavedJson = "";
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
@@ -114,7 +125,7 @@ function loadState() {
     repaired.schemaVersion = STORAGE_SCHEMA_VERSION;
     return repaired;
   } catch {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(activeStorageKey);
     if (raw) preserveLocalBackup("recuperação-dados-invalidos", raw);
     const backup = latestReadableBackup();
     return backup ? repairState(backup) : structuredClone(initialState);
@@ -149,10 +160,19 @@ function unwrapStoredData(data) {
 }
 
 function findStoredStateCandidates() {
-  const keys = new Set([STORAGE_KEY, ...LEGACY_STORAGE_KEYS]);
+  const keys = new Set([activeStorageKey]);
+  if (activeStorageKey === STORAGE_KEY) LEGACY_STORAGE_KEYS.forEach((key) => keys.add(key));
   for (let index = 0; index < localStorage.length; index += 1) {
     const key = localStorage.key(index);
-    if (key && key.toLowerCase().includes("meu-bebe") && !key.startsWith(BACKUP_KEY_PREFIX)) keys.add(key);
+    if (
+      activeStorageKey === STORAGE_KEY &&
+      key &&
+      key.toLowerCase().includes("meu-bebe") &&
+      !key.startsWith(BACKUP_KEY_PREFIX) &&
+      !key.startsWith("meu-bebe:user:")
+    ) {
+      keys.add(key);
+    }
   }
   return Array.from(keys)
     .map((key) => {
@@ -180,7 +200,7 @@ function preserveLocalBackup(reason = "automático", raw = localStorage.getItem(
       schemaVersion: STORAGE_SCHEMA_VERSION,
       reason,
       createdAt: timestamp,
-      sourceKey: STORAGE_KEY,
+      sourceKey: activeStorageKey,
       raw
     }));
     pruneLocalBackups();
@@ -322,9 +342,10 @@ function dateOnly(value) {
 
 function saveState() {
   state = repairState(state);
-  const previousRaw = localStorage.getItem(STORAGE_KEY);
+  const previousRaw = localStorage.getItem(activeStorageKey);
   if (previousRaw && previousRaw !== JSON.stringify(state)) preserveLocalBackup("antes-de-salvar", previousRaw);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  localStorage.setItem(activeStorageKey, JSON.stringify(state));
+  scheduleCloudSave();
   render();
 }
 
@@ -349,14 +370,222 @@ function restoreStateFromRaw(raw) {
   const parsed = safeJsonParse(raw);
   const data = unwrapStoredData(parsed);
   if (!data || migrationScore(data) <= 0) throw new Error("invalid-backup");
-  preserveLocalBackup("antes-de-importar", localStorage.getItem(STORAGE_KEY));
+  preserveLocalBackup("antes-de-importar", localStorage.getItem(activeStorageKey));
   state = repairState(data);
   saveState();
+}
+
+function userStorageKey(uid) {
+  return `meu-bebe:user:${uid}`;
 }
 
 function requestPersistentStorage() {
   if (!navigator.storage?.persist) return;
   navigator.storage.persist().catch(() => {});
+}
+
+function hasFirebaseConfig() {
+  return Boolean(FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.authDomain && FIREBASE_CONFIG.projectId && FIREBASE_CONFIG.appId);
+}
+
+function stateHasMeaningfulData(data) {
+  const repaired = repairState(data);
+  return repaired.babies.some((baby) => {
+    const hasProfile = Boolean(
+      baby.name && baby.name !== "Bebê" ||
+      baby.birthDate ||
+      baby.sex ||
+      baby.weight ||
+      baby.height ||
+      baby.head ||
+      baby.photo && baby.photo !== "assets/baby-clouds.png"
+    );
+    return hasProfile || (Array.isArray(baby.records) && baby.records.length > 0);
+  });
+}
+
+function stateJson(data = state) {
+  return JSON.stringify(repairState(data));
+}
+
+function renderAuthPanel() {
+  const panel = $("#authPanel");
+  if (!panel) return;
+  const loginButton = $("#googleLoginButton");
+  const logoutButton = $("#googleLogoutButton");
+  const title = $("#authTitle");
+  const status = $("#authStatus");
+
+  if (!hasFirebaseConfig()) {
+    title.textContent = "Login Google aguardando configuração";
+    status.textContent = "Preencha firebase-config.js com os dados públicos do seu projeto Firebase para ativar a sincronização.";
+    loginButton.disabled = true;
+    loginButton.textContent = "Entrar com Google";
+    logoutButton.classList.add("hidden");
+    return;
+  }
+
+  loginButton.disabled = !firebaseReady;
+  if (authUser) {
+    title.textContent = authUser.displayName || authUser.email || "Conta Google conectada";
+    status.textContent = cloudSyncReady ? "Dados protegidos e sincronizados com esta conta Google." : "Preparando sincronização segura da conta.";
+    loginButton.classList.add("hidden");
+    logoutButton.classList.remove("hidden");
+    return;
+  }
+
+  title.textContent = "Entrar para proteger seus dados";
+  status.textContent = firebaseUnavailableReason || "Use sua conta Google para salvar uma cópia segura na nuvem.";
+  loginButton.classList.remove("hidden");
+  logoutButton.classList.add("hidden");
+}
+
+async function initFirebaseAuth() {
+  renderAuthPanel();
+  if (!hasFirebaseConfig()) return;
+  try {
+    const [appModule, authModule, firestoreModule] = await Promise.all([
+      import(`https://www.gstatic.com/firebasejs/${FIREBASE_CDN_VERSION}/firebase-app.js`),
+      import(`https://www.gstatic.com/firebasejs/${FIREBASE_CDN_VERSION}/firebase-auth.js`),
+      import(`https://www.gstatic.com/firebasejs/${FIREBASE_CDN_VERSION}/firebase-firestore.js`)
+    ]);
+    const app = appModule.initializeApp(FIREBASE_CONFIG);
+    const auth = authModule.getAuth(app);
+    const db = firestoreModule.getFirestore(app);
+    firebaseServices = {
+      auth,
+      db,
+      GoogleAuthProvider: authModule.GoogleAuthProvider,
+      signInWithPopup: authModule.signInWithPopup,
+      signOut: authModule.signOut,
+      onAuthStateChanged: authModule.onAuthStateChanged,
+      doc: firestoreModule.doc,
+      getDoc: firestoreModule.getDoc,
+      setDoc: firestoreModule.setDoc,
+      serverTimestamp: firestoreModule.serverTimestamp
+    };
+    firebaseReady = true;
+    firebaseUnavailableReason = "";
+    firebaseServices.onAuthStateChanged(auth, handleAuthStateChanged);
+    renderAuthPanel();
+  } catch {
+    firebaseReady = false;
+    firebaseUnavailableReason = "Não foi possível carregar o Firebase agora. O app continua funcionando offline.";
+    renderAuthPanel();
+  }
+}
+
+function userDocRef(uid = authUser?.uid) {
+  if (!firebaseServices || !uid) return null;
+  return firebaseServices.doc(firebaseServices.db, "users", uid);
+}
+
+async function loadCloudState(uid) {
+  const ref = userDocRef(uid);
+  if (!ref) return null;
+  const snapshot = await firebaseServices.getDoc(ref);
+  if (!snapshot.exists()) return null;
+  return unwrapStoredData(snapshot.data());
+}
+
+async function saveCloudStateNow() {
+  if (!firebaseServices || !authUser || !cloudSyncReady || applyingRemoteState) return;
+  const json = stateJson(state);
+  if (json === lastCloudSavedJson) return;
+  const ref = userDocRef(authUser.uid);
+  await firebaseServices.setDoc(ref, {
+    schemaVersion: STORAGE_SCHEMA_VERSION,
+    ownerUid: authUser.uid,
+    ownerEmail: authUser.email || "",
+    updatedAt: firebaseServices.serverTimestamp(),
+    state: repairState(state)
+  }, { merge: true });
+  lastCloudSavedJson = json;
+}
+
+function scheduleCloudSave() {
+  if (!firebaseServices || !authUser || !cloudSyncReady || applyingRemoteState) return;
+  window.clearTimeout(cloudSaveTimer);
+  cloudSaveTimer = window.setTimeout(() => {
+    saveCloudStateNow().catch(() => toast("Não foi possível sincronizar agora. Seus dados continuam salvos neste dispositivo."));
+  }, 900);
+}
+
+async function handleAuthStateChanged(user) {
+  authUser = user;
+  cloudSyncReady = false;
+  renderAuthPanel();
+  if (!user) {
+    activeStorageKey = STORAGE_KEY;
+    state = loadState();
+    lastCloudSavedJson = "";
+    render();
+    renderAuthPanel();
+    return;
+  }
+
+  try {
+    preserveLocalBackup("antes-login-google", localStorage.getItem(activeStorageKey));
+    const localState = repairState(state);
+    activeStorageKey = userStorageKey(user.uid);
+    const accountLocal = safeJsonParse(localStorage.getItem(activeStorageKey));
+    const accountLocalState = migrationScore(accountLocal) > 0 ? repairState(accountLocal) : null;
+    const localHasData = stateHasMeaningfulData(localState);
+    const cloudState = await loadCloudState(user.uid);
+    const sourceCloudState = cloudState || accountLocalState;
+    const cloudHasData = cloudState && stateHasMeaningfulData(cloudState);
+    const accountHasData = sourceCloudState && stateHasMeaningfulData(sourceCloudState);
+    const sameData = sourceCloudState && stateJson(localState) === stateJson(sourceCloudState);
+
+    if (localHasData && (!accountHasData || !sameData)) {
+      const importLocal = await askConfirm("Deseja importar seus dados antigos para esta conta?");
+      if (importLocal) {
+        state = repairState(localState);
+        cloudSyncReady = true;
+        await saveCloudStateNow();
+        localStorage.setItem(activeStorageKey, JSON.stringify(state));
+        toast("Dados antigos importados para sua conta Google");
+      } else if (accountHasData) {
+        applyingRemoteState = true;
+        state = repairState(sourceCloudState);
+        localStorage.setItem(activeStorageKey, JSON.stringify(state));
+        applyingRemoteState = false;
+        cloudSyncReady = true;
+        lastCloudSavedJson = stateJson(state);
+        render();
+        toast("Conta Google carregada sem apagar o backup local");
+      } else {
+        applyingRemoteState = true;
+        state = repairState(initialState);
+        localStorage.setItem(activeStorageKey, JSON.stringify(state));
+        applyingRemoteState = false;
+        cloudSyncReady = true;
+        await saveCloudStateNow();
+        render();
+        toast("Conta Google iniciada. Seus dados antigos ficaram preservados em backup local.");
+      }
+    } else if (accountHasData) {
+      applyingRemoteState = true;
+      state = repairState(sourceCloudState);
+      localStorage.setItem(activeStorageKey, JSON.stringify(state));
+      applyingRemoteState = false;
+      cloudSyncReady = true;
+      lastCloudSavedJson = cloudState ? stateJson(state) : "";
+      if (!cloudState) await saveCloudStateNow();
+      render();
+      toast("Dados da conta Google carregados");
+    } else {
+      cloudSyncReady = true;
+      await saveCloudStateNow();
+      toast("Conta Google conectada");
+    }
+  } catch {
+    cloudSyncReady = false;
+    toast("Login feito, mas a sincronização não foi concluída. Seus dados locais foram preservados.");
+  } finally {
+    applyingRemoteState = false;
+    renderAuthPanel();
+  }
 }
 
 function activeBaby() {
@@ -596,6 +825,7 @@ function showMilkFeedback(message = "✅ Retirada registrada com sucesso.") {
 // Renderizacao sempre deriva do estado atual, mantendo os cartoes sincronizados.
 function render() {
   const baby = activeBaby();
+  renderAuthPanel();
   document.body.classList.toggle("soft-night", Boolean(state.settings.softNight));
   $("#babyNameHero").textContent = baby.name;
   $("#babyAge").textContent = ageText(baby.birthDate);
@@ -633,7 +863,7 @@ function renderProfileForm(baby) {
 }
 
 function renderWelcomePanel(baby) {
-  const shouldShow = !localStorage.getItem(`${STORAGE_KEY}:welcomed`) && (!baby.name || baby.name === "Bebê");
+  const shouldShow = !localStorage.getItem(`${activeStorageKey}:welcomed`) && (!baby.name || baby.name === "Bebê");
   $("#welcomePanel")?.classList.toggle("hidden", !shouldShow);
 }
 
@@ -2204,7 +2434,7 @@ function setupForms() {
         head
       });
     }
-    localStorage.setItem(`${STORAGE_KEY}:welcomed`, "1");
+    localStorage.setItem(`${activeStorageKey}:welcomed`, "1");
     saveState();
     toast("Bebê cadastrado");
   });
@@ -2665,6 +2895,35 @@ function setupEvents() {
     saveState();
   });
 
+  $("#googleLoginButton").addEventListener("click", async () => {
+    if (!firebaseReady || !firebaseServices) {
+      toast("Configure o Firebase para ativar o login Google");
+      return;
+    }
+    try {
+      const provider = new firebaseServices.GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: "select_account" });
+      await firebaseServices.signInWithPopup(firebaseServices.auth, provider);
+    } catch {
+      toast("Não foi possível entrar com Google agora");
+    }
+  });
+
+  $("#googleLogoutButton").addEventListener("click", async () => {
+    if (!firebaseServices) return;
+    try {
+      await saveCloudStateNow();
+      preserveLocalBackup("antes-sair-google", localStorage.getItem(activeStorageKey));
+      await firebaseServices.signOut(firebaseServices.auth);
+      authUser = null;
+      cloudSyncReady = false;
+      toast("Conta desconectada");
+      renderAuthPanel();
+    } catch {
+      toast("Não foi possível sair agora");
+    }
+  });
+
   $("#makeLocalBackup").addEventListener("click", () => {
     preserveLocalBackup("backup-manual", JSON.stringify(repairState(state)));
     $("#backupStatus").textContent = `Último backup local criado em ${formatFullDateTime(new Date())}.`;
@@ -2680,7 +2939,7 @@ function setupEvents() {
       return;
     }
     if (!await askConfirm("Restaurar o último backup local? Os dados atuais serão preservados em outro backup antes da restauração.")) return;
-    preserveLocalBackup("antes-de-restaurar", localStorage.getItem(STORAGE_KEY));
+    preserveLocalBackup("antes-de-restaurar", localStorage.getItem(activeStorageKey));
     state = repairState(backup);
     saveState();
     $("#backupStatus").textContent = "Último backup local restaurado com segurança.";
@@ -2726,6 +2985,7 @@ function boot() {
   setupEvents();
   requestPersistentStorage();
   saveState();
+  initFirebaseAuth();
   if (location.hash) {
     window.setTimeout(() => openHomeTarget(location.hash.replace("#", "")), 250);
   }
