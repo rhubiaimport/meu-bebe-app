@@ -9,7 +9,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="assets/baby-clouds.png" type="image/png">
     <link rel="apple-touch-icon" href="assets/baby-clouds.png">
-    <link rel="stylesheet" href="style.css?v=15">
+    <link rel="stylesheet" href="style.css?v=16">
   </head>
   <body>
     <div class="splash" id="splash" aria-hidden="true">
@@ -457,6 +457,15 @@
               <label class="hidden" id="medicineCustomIntervalWrap">Intervalo personalizado em horas
                 <input name="customInterval" type="number" min="1" max="72" step="1" placeholder="Ex: 5">
               </label>
+              <label>Duração do remédio (dias)
+                <input name="durationDays" type="number" min="0" step="1" placeholder="Opcional">
+              </label>
+              <label>Data de início do tratamento
+                <input name="treatmentStart" type="date">
+              </label>
+              <label>Data de término
+                <input name="treatmentEnd" type="date" placeholder="Calculada quando possível">
+              </label>
               <label>📝 Observações
                 <input name="note" type="text" placeholder="Opcional">
               </label>
@@ -498,6 +507,15 @@
             </label>
             <label>Intervalo em horas
               <input name="intervalHours" type="number" min="1" max="72" step="1">
+            </label>
+            <label>Duração do remédio (dias)
+              <input name="durationDays" type="number" min="0" step="1" placeholder="Opcional">
+            </label>
+            <label>Data de início do tratamento
+              <input name="treatmentStart" type="date">
+            </label>
+            <label>Data de término
+              <input name="treatmentEnd" type="date">
             </label>
             <label>Observações
               <input name="note" type="text" placeholder="Opcional">
@@ -947,6 +965,6 @@
       <option value="Outra observação"></option>
     </datalist>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="script.js?v=15"></script>
+    <script src="script.js?v=16"></script>
   </body>
 </html>

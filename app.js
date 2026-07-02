@@ -1134,16 +1134,39 @@ function medicineIntervalLabel(record) {
   return hours ? `${hours} em ${hours} horas` : "Sem intervalo";
 }
 
+function medicineTreatmentData(data, fallbackDate) {
+  const durationDays = cleanNumber(data.durationDays);
+  const treatmentStart = data.treatmentStart || dateOnly(fallbackDate);
+  let treatmentEnd = data.treatmentEnd || "";
+  if (!treatmentEnd && durationDays && treatmentStart) {
+    const end = new Date(`${treatmentStart}T12:00`);
+    end.setDate(end.getDate() + Number(durationDays) - 1);
+    treatmentEnd = dateOnly(end);
+  }
+  return { durationDays, treatmentStart, treatmentEnd };
+}
+
+function medicineTreatmentLabel(record) {
+  if (!record.durationDays && !record.treatmentStart && !record.treatmentEnd) return "Duração não informada";
+  const parts = [];
+  if (record.durationDays) parts.push(`${record.durationDays} dia${Number(record.durationDays) === 1 ? "" : "s"}`);
+  if (record.treatmentStart) parts.push(`início ${formatOnlyDate(`${record.treatmentStart}T12:00`)}`);
+  if (record.treatmentEnd) parts.push(`término ${formatOnlyDate(`${record.treatmentEnd}T12:00`)}`);
+  return parts.join(" · ");
+}
+
 function registerMedicine(data) {
   const intervalHours = data.interval === "custom" ? Number(data.customInterval) : Number(data.interval);
   const date = dateTimeOrNow(data.date, data.time);
   const nextDate = intervalHours ? addTime(date, intervalHours * 60) : null;
+  const treatment = medicineTreatmentData(data, date);
   addRecord("medicine", {
     name: data.name.trim() || "Remédio",
     dose: data.dose,
     note: data.note,
     taken: data.taken,
     intervalHours,
+    ...treatment,
     date,
     next: nextDate?.toISOString()
   });
@@ -1177,7 +1200,8 @@ function renderMedicineView(baby) {
     ["💊 Próximo remédio", next ? next.name || "Remédio" : "Nenhum"],
     ["🕒 Próxima dose", next ? formatClock(medicineNextDate(next)) : "--:--"],
     ["⌛ Faltam", next ? (medicineNextDate(next) > now ? formatDuration(medicineNextDate(next) - now) : "Agora") : "Sem registro"],
-    ["Intervalo", next ? medicineIntervalLabel(next) : "--"]
+    ["Intervalo", next ? medicineIntervalLabel(next) : "--"],
+    ["Duração", next ? medicineTreatmentLabel(next) : "--"]
   ].map(([label, value]) => `
     <article class="feed-summary-card">
       <small>${esc(label)}</small>
@@ -1241,7 +1265,8 @@ function renderMedicineHistory(records) {
           <div>
             <strong>${esc(record.name || "Remédio")}</strong>
             <span>${esc(formatClock(record.date))} · ${esc(record.dose || "Quantidade não informada")}</span>
-            <small>${esc(record.taken === "yes" ? "Tomou: Sim" : record.taken === "no" ? "Tomou: Não" : "Tomou: não informado")} · Intervalo: ${esc(medicineIntervalLabel(record))} · Próxima dose: ${esc(formatFullDateTime(medicineNextDate(record)))}${record.note ? ` · ${esc(record.note)}` : ""}</small>
+            <small><strong>Tomou?</strong> ${esc(record.taken === "yes" ? "Sim" : record.taken === "no" ? "Não" : "Não informado")}</small>
+            <small>${esc(medicineTreatmentLabel(record))} · Intervalo: ${esc(medicineIntervalLabel(record))} · Próxima dose: ${esc(formatFullDateTime(medicineNextDate(record)))}${record.note ? ` · ${esc(record.note)}` : ""}</small>
           </div>
           <div class="feed-history-actions">
             <button type="button" data-edit-medicine="${esc(record.id)}" aria-label="Editar remédio">✎</button>
@@ -1264,6 +1289,9 @@ function openMedicineEdit(id) {
   form.elements.date.value = dateOnly(record.date);
   form.elements.time.value = `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
   form.elements.intervalHours.value = record.intervalHours || 6;
+  form.elements.durationDays.value = record.durationDays || "";
+  form.elements.treatmentStart.value = record.treatmentStart || "";
+  form.elements.treatmentEnd.value = record.treatmentEnd || "";
   form.elements.taken.value = record.taken || "";
   form.elements.note.value = record.note || "";
   form.classList.remove("hidden");
@@ -1671,9 +1699,10 @@ function scheduleMedicineNotifications(baby) {
       if (delay <= 0 || delay > 2147483647) return;
       medicineNotificationTimers.push(window.setTimeout(() => {
         if (shouldAsk) {
-          const taken = window.confirm(`${message}\n\nOK = Sim, tomou\nCancelar = Não tomou`);
-          updateRecord(record.id, { taken: taken ? "yes" : "no" });
-          toast(taken ? "✅ Dose marcada como tomada." : "⚠️ Dose marcada como não tomada.");
+          askDoseConfirmation(record.name || "este remédio").then((taken) => {
+            updateRecord(record.id, { taken });
+            toast(taken === "yes" ? "✅ Dose marcada como tomada." : "⚠️ Dose marcada como não tomada.");
+          });
           return;
         }
         toast(message);
@@ -1756,6 +1785,33 @@ function askConfirm(message) {
     });
     document.body.appendChild(dialog);
     dialog.querySelector("[data-confirm-choice='no']").focus();
+  });
+}
+
+function askDoseConfirmation(medicineName = "este remédio") {
+  return new Promise((resolve) => {
+    const dialog = document.createElement("div");
+    dialog.className = "confirm-backdrop";
+    dialog.innerHTML = `
+      <article class="confirm-box dose-confirm-box" role="dialog" aria-modal="true" aria-live="polite">
+        <p>O bebê tomou ${esc(medicineName)}?</p>
+        <div>
+          <button type="button" data-dose-choice="yes">✅ Sim, tomou</button>
+          <button type="button" data-dose-choice="no">❌ Não tomou</button>
+        </div>
+      </article>
+    `;
+    const finish = (value) => {
+      dialog.remove();
+      resolve(value);
+    };
+    dialog.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-dose-choice]");
+      if (!button && event.target !== dialog) return;
+      finish(button?.dataset.doseChoice === "yes" ? "yes" : "no");
+    });
+    document.body.appendChild(dialog);
+    dialog.querySelector("[data-dose-choice='yes']").focus();
   });
 }
 
@@ -2160,13 +2216,21 @@ function setupEvents() {
   $("#medicineInterval").addEventListener("change", (event) => {
     $("#medicineCustomIntervalWrap").classList.toggle("hidden", event.target.value !== "custom");
   });
-  $("#medicineForm").addEventListener("submit", (event) => {
+  ["durationDays", "treatmentStart"].forEach((name) => {
+    $(`#medicineForm [name="${name}"]`).addEventListener("input", () => {
+      const form = $("#medicineForm");
+      const data = Object.fromEntries(new FormData(form).entries());
+      const calculated = medicineTreatmentData(data, dateTimeOrNow(data.date, data.time));
+      if (calculated.treatmentEnd) form.elements.treatmentEnd.value = calculated.treatmentEnd;
+    });
+  });
+  $("#medicineForm").addEventListener("submit", async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
     const data = Object.fromEntries(new FormData(form).entries());
     const useOtherDate = $("#medicineOtherDate").checked;
     if (!data.taken) {
-      data.taken = window.confirm("O bebê tomou este remédio?\n\nOK = Sim, tomou\nCancelar = Não tomou") ? "yes" : "no";
+      data.taken = await askDoseConfirmation(data.name || "este remédio");
     }
     registerMedicine({ ...data, date: useOtherDate ? data.date : todayInput() });
     form.reset();
@@ -2189,12 +2253,14 @@ function setupEvents() {
     const data = Object.fromEntries(new FormData(event.currentTarget).entries());
     const date = dateTimeOrNow(data.date, data.time);
     const next = addTime(date, Number(data.intervalHours) * 60);
+    const treatment = medicineTreatmentData(data, date);
     updateRecord(data.id, {
       name: data.name,
       dose: data.dose,
       note: data.note,
       taken: data.taken,
       intervalHours: Number(data.intervalHours),
+      ...treatment,
       date,
       next: next?.toISOString()
     });

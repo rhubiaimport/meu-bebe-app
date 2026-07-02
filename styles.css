@@ -1420,6 +1420,20 @@ form button,
   box-shadow: none;
 }
 
+.dose-confirm-box div {
+  grid-template-columns: 1fr;
+}
+
+.dose-confirm-box button {
+  min-height: 58px;
+  font-weight: 900;
+}
+
+.dose-confirm-box button:first-child {
+  background: linear-gradient(135deg, #dbf6e4, #ffffff);
+  box-shadow: 0 10px 26px rgba(88, 158, 112, 0.16);
+}
+
 .empty {
   padding: 24px;
   border-radius: 22px;
