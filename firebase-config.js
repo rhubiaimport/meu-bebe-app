@@ -1,8 +1,8 @@
 window.MEU_BEBE_FIREBASE_CONFIG = {
-  apiKey: "__FIREBASE_API_KEY__",
-  authDomain: "__FIREBASE_AUTH_DOMAIN__",
-  projectId: "__FIREBASE_PROJECT_ID__",
-  storageBucket: "__FIREBASE_STORAGE_BUCKET__",
-  messagingSenderId: "__FIREBASE_MESSAGING_SENDER_ID__",
-  appId: "__FIREBASE_APP_ID__"
+  apiKey: "AIzaSyCpavU5hH5Ptp1sI2NLzhrb3Ey2F1nFYbY",
+  authDomain: "meu-bebe-ebb9b.firebaseapp.com",
+  projectId: "meu-bebe-ebb9b",
+  storageBucket: "meu-bebe-ebb9b.firebasestorage.app",
+  messagingSenderId: "931844473012",
+  appId: "1:931844473012:web:311dbcec53aa6e628597e1"
 };

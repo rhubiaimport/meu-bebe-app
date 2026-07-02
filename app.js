@@ -465,7 +465,11 @@ async function initFirebaseAuth() {
       auth,
       db,
       GoogleAuthProvider: authModule.GoogleAuthProvider,
+      browserLocalPersistence: authModule.browserLocalPersistence,
+      getRedirectResult: authModule.getRedirectResult,
       signInWithPopup: authModule.signInWithPopup,
+      signInWithRedirect: authModule.signInWithRedirect,
+      setPersistence: authModule.setPersistence,
       signOut: authModule.signOut,
       onAuthStateChanged: authModule.onAuthStateChanged,
       doc: firestoreModule.doc,
@@ -474,6 +478,8 @@ async function initFirebaseAuth() {
       onSnapshot: firestoreModule.onSnapshot,
       serverTimestamp: firestoreModule.serverTimestamp
     };
+    await firebaseServices.setPersistence(auth, firebaseServices.browserLocalPersistence);
+    await firebaseServices.getRedirectResult(auth).catch(() => null);
     firebaseReady = true;
     firebaseUnavailableReason = "";
     firebaseServices.onAuthStateChanged(auth, handleAuthStateChanged);
@@ -593,7 +599,7 @@ async function handleAuthStateChanged(user) {
       render();
       toast("Conta Google iniciada sem importar dados locais antigos.");
     } else if (localHasData && !alreadyDecidedImport && (!accountHasData || !sameData)) {
-      const importLocal = await askConfirm("Encontramos dados salvos neste dispositivo. Deseja importá-los para sua conta Google?");
+      const importLocal = await askConfirm("Deseja importar seus dados locais para sua conta Google?");
       localStorage.setItem(importDecisionKey, importLocal ? "imported" : "skipped");
       if (importLocal) {
         state = repairState(localState);
@@ -2965,7 +2971,12 @@ function setupEvents() {
       const provider = new firebaseServices.GoogleAuthProvider();
       provider.setCustomParameters({ prompt: "select_account" });
       await firebaseServices.signInWithPopup(firebaseServices.auth, provider);
-    } catch {
+    } catch (error) {
+      const fallbackCodes = ["auth/popup-blocked", "auth/popup-closed-by-user", "auth/cancelled-popup-request", "auth/operation-not-supported-in-this-environment"];
+      if (fallbackCodes.includes(error?.code)) {
+        await firebaseServices.signInWithRedirect(firebaseServices.auth, provider);
+        return;
+      }
       toast("Não foi possível entrar com Google agora");
     }
   });
