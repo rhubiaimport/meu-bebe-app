@@ -127,6 +127,10 @@ img {
   padding: max(18px, env(safe-area-inset-top)) 18px calc(96px + var(--safe-bottom));
 }
 
+body:not([data-current-view="home"]) .app-shell {
+  padding-top: max(10px, env(safe-area-inset-top));
+}
+
 .topbar {
   width: min(1180px, 100%);
   margin: 0 auto 18px;
@@ -134,6 +138,14 @@ img {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+}
+
+body:not([data-current-view="home"]) .topbar {
+  display: none;
+}
+
+body:not([data-current-view="home"]) .auth-panel {
+  display: none;
 }
 
 .topbar h1,
@@ -1101,11 +1113,11 @@ img {
 }
 
 .section-heading {
-  margin: 4px 0 16px;
+  margin: 0 0 14px;
 }
 
 .section-heading h2 {
-  font-size: clamp(1.9rem, 5vw, 2.7rem);
+  font-size: clamp(1.5rem, 4vw, 2.35rem);
 }
 
 .form-grid,
@@ -1566,9 +1578,27 @@ form button,
 
 @media (max-width: 680px) {
   .app-shell {
+    padding-top: max(10px, env(safe-area-inset-top));
     padding-right: 14px;
     padding-left: 14px;
     padding-bottom: calc(154px + var(--safe-bottom));
+  }
+
+  body[data-current-view="home"] .app-shell {
+    padding-top: max(18px, env(safe-area-inset-top));
+  }
+
+  .section-heading {
+    margin-bottom: 12px;
+  }
+
+  .section-heading h2 {
+    font-size: clamp(1.42rem, 8vw, 1.9rem);
+  }
+
+  .section-heading p {
+    margin-top: 4px;
+    font-size: 0.96rem;
   }
 
   .baby-hero {

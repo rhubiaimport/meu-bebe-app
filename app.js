@@ -2314,7 +2314,8 @@ function askDoseConfirmation(medicineName = "este remédio") {
 
 function switchTab(tab) {
   $$(".view").forEach((view) => view.classList.toggle("active", view.dataset.view === tab));
-  const activeTab = tab === "pee" ? "poop" : tab === "appointment" ? "medicine" : tab;
+  document.body.dataset.currentView = tab;
+  const activeTab = tab === "pee" ? "poop" : ["appointment", "vaccine", "doctor"].includes(tab) ? "medicine" : tab;
   $$(".tabbar button").forEach((button) => button.classList.toggle("active", button.dataset.tab === activeTab));
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -2381,7 +2382,7 @@ function openHomeTarget(targetKey) {
     switchTab(targetKey);
     return;
   }
-  if (targetKey === "medicine" || targetKey === "appointment") {
+  if (["medicine", "appointment", "vaccine", "doctor"].includes(targetKey)) {
     switchTab(targetKey);
     return;
   }
@@ -2509,6 +2510,10 @@ function setupForms() {
 
 function setupEvents() {
   $$(".tabbar button").forEach((button) => {
+    button.addEventListener("click", () => switchTab(button.dataset.tab));
+  });
+
+  $$(".subtab-row button[data-tab]").forEach((button) => {
     button.addEventListener("click", () => switchTab(button.dataset.tab));
   });
 
@@ -3053,6 +3058,7 @@ function setupEvents() {
 }
 
 function boot() {
+  document.body.dataset.currentView = "home";
   setupForms();
   setupEvents();
   requestPersistentStorage();

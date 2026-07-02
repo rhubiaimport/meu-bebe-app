@@ -9,7 +9,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="assets/baby-clouds.png" type="image/png">
     <link rel="apple-touch-icon" href="assets/baby-clouds.png">
-    <link rel="stylesheet" href="style.css?v=20">
+    <link rel="stylesheet" href="style.css?v=21">
     <script src="firebase-config.js"></script>
   </head>
   <body>
@@ -424,8 +424,8 @@
           <div class="subtab-row">
             <button type="button" class="active" data-tab="medicine">💊 Remédios</button>
             <button type="button" data-tab="appointment">🩺 Consultas</button>
-            <button type="button" disabled>💉 Vacinas</button>
-            <button type="button" disabled>👨‍⚕️ Médicos</button>
+            <button type="button" data-tab="vaccine">💉 Vacinas</button>
+            <button type="button" data-tab="doctor">👨‍⚕️ Médicos</button>
           </div>
 
           <section class="health-main-grid">
@@ -558,8 +558,8 @@
           <div class="subtab-row">
             <button type="button" data-tab="medicine">💊 Remédios</button>
             <button type="button" class="active" data-tab="appointment">🩺 Consultas</button>
-            <button type="button" disabled>💉 Vacinas</button>
-            <button type="button" disabled>👨‍⚕️ Médicos</button>
+            <button type="button" data-tab="vaccine">💉 Vacinas</button>
+            <button type="button" data-tab="doctor">👨‍⚕️ Médicos</button>
           </div>
 
           <section class="health-main-grid">
@@ -647,6 +647,56 @@
           </form>
 
           <button class="milk-fab" id="appointmentFab" type="button" aria-label="Nova consulta">🩺 <span>Nova consulta</span></button>
+        </section>
+
+        <section class="view health-view vaccine-view" id="view-vaccine" data-view="vaccine">
+          <div class="health-background appointment-bg" aria-hidden="true"></div>
+          <div class="section-heading feed-heading">
+            <h2>💉 Vacinas</h2>
+            <p>Organize as vacinas do seu bebê.</p>
+          </div>
+          <div class="subtab-row">
+            <button type="button" data-tab="medicine">💊 Remédios</button>
+            <button type="button" data-tab="appointment">🩺 Consultas</button>
+            <button type="button" class="active" data-tab="vaccine">💉 Vacinas</button>
+            <button type="button" data-tab="doctor">👨‍⚕️ Médicos</button>
+          </div>
+
+          <section class="health-main-grid">
+            <article class="panel feed-register-panel">
+              <h3>Carteirinha de vacinas</h3>
+              <p>Esta seção já está preparada para registrar vacinas nas próximas atualizações.</p>
+            </article>
+            <article class="panel">
+              <h3>Resumo</h3>
+              <p>Nenhuma vacina cadastrada ainda.</p>
+            </article>
+          </section>
+        </section>
+
+        <section class="view health-view doctor-view" id="view-doctor" data-view="doctor">
+          <div class="health-background medicine-bg" aria-hidden="true"></div>
+          <div class="section-heading feed-heading">
+            <h2>👨‍⚕️ Médicos</h2>
+            <p>Guarde contatos e informações dos profissionais de saúde.</p>
+          </div>
+          <div class="subtab-row">
+            <button type="button" data-tab="medicine">💊 Remédios</button>
+            <button type="button" data-tab="appointment">🩺 Consultas</button>
+            <button type="button" data-tab="vaccine">💉 Vacinas</button>
+            <button type="button" class="active" data-tab="doctor">👨‍⚕️ Médicos</button>
+          </div>
+
+          <section class="health-main-grid">
+            <article class="panel feed-register-panel">
+              <h3>Equipe de saúde</h3>
+              <p>Esta seção já está preparada para registrar médicos e contatos nas próximas atualizações.</p>
+            </article>
+            <article class="panel">
+              <h3>Resumo</h3>
+              <p>Nenhum médico cadastrado ainda.</p>
+            </article>
+          </section>
         </section>
 
         <section class="view" id="view-register" data-view="register">
@@ -983,6 +1033,6 @@
       <option value="Outra observação"></option>
     </datalist>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="script.js?v=20"></script>
+    <script src="script.js?v=21"></script>
   </body>
 </html>
