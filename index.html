@@ -9,7 +9,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="assets/baby-clouds.png" type="image/png">
     <link rel="apple-touch-icon" href="assets/baby-clouds.png">
-    <link rel="stylesheet" href="style.css?v=22">
+    <link rel="stylesheet" href="style.css?v=23">
     <script src="firebase-config.js"></script>
   </head>
   <body>
@@ -83,7 +83,7 @@
         <section class="view feed-view" id="view-feed" data-view="feed">
           <div class="feed-background" aria-hidden="true"></div>
           <div class="section-heading feed-heading">
-            <h2>🍼 Mamadas</h2>
+            <h2>← Mamadas</h2>
             <p>Acompanhe os horários das mamadas do seu bebê.</p>
           </div>
 
@@ -204,7 +204,7 @@
         <section class="view milk-view" id="view-milk" data-view="milk">
           <div class="feed-background" aria-hidden="true"></div>
           <div class="section-heading feed-heading">
-            <h2>🤱 Leite Materno</h2>
+            <h2>← Leite Materno</h2>
             <p>Controle as retiradas e acompanhe a validade do leite.</p>
           </div>
 
@@ -286,7 +286,7 @@
         <section class="view elimination-view poop-view" id="view-poop" data-view="poop">
           <div class="elimination-background poop-bg" aria-hidden="true"></div>
           <div class="section-heading feed-heading">
-            <h2>💩 Cocô</h2>
+            <h2>← Fraldas</h2>
             <p>Acompanhe a rotina intestinal do seu bebê.</p>
           </div>
           <div class="subtab-row">
@@ -352,7 +352,7 @@
         <section class="view elimination-view pee-view" id="view-pee" data-view="pee">
           <div class="elimination-background pee-bg" aria-hidden="true"></div>
           <div class="section-heading feed-heading">
-            <h2>💧 Xixi</h2>
+            <h2>← Fraldas</h2>
             <p>Acompanhe a quantidade de xixis do seu bebê.</p>
           </div>
           <div class="subtab-row">
@@ -418,7 +418,7 @@
         <section class="view health-view medicine-view" id="view-medicine" data-view="medicine">
           <div class="health-background medicine-bg" aria-hidden="true"></div>
           <div class="section-heading feed-heading">
-            <h2>💊 Remédios</h2>
+            <h2>← Remédios</h2>
             <p>Controle todos os medicamentos do seu bebê.</p>
           </div>
           <div class="subtab-row">
@@ -470,14 +470,20 @@
               <label class="hidden" id="medicineCustomIntervalWrap">Intervalo personalizado em horas
                 <input name="customInterval" type="number" min="1" max="72" step="1" placeholder="Ex: 5">
               </label>
-              <label>Duração do remédio (dias)
+              <label>Duração do tratamento (dias)
                 <input name="durationDays" type="number" min="0" step="1" placeholder="Opcional">
               </label>
-              <label>Data de início do tratamento
+              <label>Início do tratamento
                 <input name="treatmentStart" type="date">
               </label>
               <label>Data de término
                 <input name="treatmentEnd" type="date" placeholder="Calculada quando possível">
+              </label>
+              <label>Médico
+                <input name="prescriber" type="text" placeholder="Opcional">
+              </label>
+              <label>Receita
+                <input name="prescription" type="text" placeholder="Opcional">
               </label>
               <label>📝 Observações
                 <input name="note" type="text" placeholder="Opcional">
@@ -496,10 +502,16 @@
             </div>
           </form>
 
+          <section class="medicine-legend panel" aria-label="Legenda das doses">
+            <span><i class="dose-dot taken"></i> Tomado</span>
+            <span><i class="dose-dot pending"></i> Pendente</span>
+            <span><i class="dose-dot late"></i> Atrasado</span>
+          </section>
+
           <section class="feed-stats-grid" id="medicineStats" aria-label="Estatísticas de remédios"></section>
 
-          <section class="panel feed-history-panel">
-            <h3>Histórico de remédios</h3>
+          <section class="medicine-card-list">
+            <h3>Controle de medicamentos</h3>
             <div class="feed-history" id="medicineHistory"></div>
           </section>
 
@@ -521,14 +533,20 @@
             <label>Intervalo em horas
               <input name="intervalHours" type="number" min="1" max="72" step="1">
             </label>
-            <label>Duração do remédio (dias)
+            <label>Duração do tratamento (dias)
               <input name="durationDays" type="number" min="0" step="1" placeholder="Opcional">
             </label>
-            <label>Data de início do tratamento
+            <label>Início do tratamento
               <input name="treatmentStart" type="date">
             </label>
             <label>Data de término
               <input name="treatmentEnd" type="date">
+            </label>
+            <label>Médico
+              <input name="prescriber" type="text" placeholder="Opcional">
+            </label>
+            <label>Receita
+              <input name="prescription" type="text" placeholder="Opcional">
             </label>
             <label>Observações
               <input name="note" type="text" placeholder="Opcional">
@@ -552,7 +570,7 @@
         <section class="view health-view appointment-view" id="view-appointment" data-view="appointment">
           <div class="health-background appointment-bg" aria-hidden="true"></div>
           <div class="section-heading feed-heading">
-            <h2>🩺 Consultas</h2>
+            <h2>← Consultas</h2>
             <p>Organize todas as consultas do seu bebê.</p>
           </div>
           <div class="subtab-row">
@@ -652,7 +670,7 @@
         <section class="view health-view vaccine-view" id="view-vaccine" data-view="vaccine">
           <div class="health-background appointment-bg" aria-hidden="true"></div>
           <div class="section-heading feed-heading">
-            <h2>💉 Vacinas</h2>
+            <h2>← Vacinas</h2>
             <p>Organize as vacinas do seu bebê.</p>
           </div>
           <div class="subtab-row">
@@ -708,7 +726,7 @@
         <section class="view health-view doctor-view" id="view-doctor" data-view="doctor">
           <div class="health-background medicine-bg" aria-hidden="true"></div>
           <div class="section-heading feed-heading">
-            <h2>👨‍⚕️ Médicos</h2>
+            <h2>← Médicos</h2>
             <p>Guarde contatos e informações dos profissionais de saúde.</p>
           </div>
           <div class="subtab-row">
@@ -893,9 +911,71 @@
         <section class="view profile-view" id="view-profile" data-view="profile">
           <div class="profile-background" aria-hidden="true"></div>
           <div class="section-heading feed-heading">
-            <h2>👶🏽 Perfil do Bebê</h2>
+            <h2>← Perfil</h2>
             <p>Todas as informações do seu pequeno em um só lugar.</p>
           </div>
+
+          <section class="profile-hero-card">
+            <label class="profile-hero-photo">
+              <input id="profileHeroPhotoInput" type="file" accept="image/*">
+              <img id="profileHeroPhoto" src="assets/baby-clouds.png" alt="Foto do bebê">
+              <span aria-hidden="true">📷</span>
+            </label>
+            <div class="profile-hero-copy">
+              <p class="eyebrow">Perfil ativo</p>
+              <h3 id="profileHeroName">Não informado</h3>
+              <p id="profileHeroAge">Não informado</p>
+              <small id="profileHeroBirth">Nascimento: Não informado</small>
+            </div>
+          </section>
+
+          <section class="profile-card-grid" aria-label="Resumo do perfil">
+            <article class="profile-info-card">
+              <small>Informações do bebê</small>
+              <strong id="profileInfoSummary">Não informado</strong>
+              <span id="profileSexSummary">Não informado</span>
+            </article>
+            <article class="profile-info-card">
+              <small>Peso</small>
+              <strong id="profileWeightSummary">Não informado</strong>
+              <span id="profileWeightDetail">Não informado</span>
+            </article>
+            <article class="profile-info-card">
+              <small>Altura</small>
+              <strong id="profileHeightSummary">Não informado</strong>
+              <span id="profileHeightDetail">Não informado</span>
+            </article>
+            <article class="profile-info-card">
+              <small>IMC</small>
+              <strong id="profileBmiSummary">Não informado</strong>
+              <span>Estimativa com peso e altura atuais</span>
+            </article>
+            <article class="profile-info-card">
+              <small>Alergias</small>
+              <strong>Não informado</strong>
+              <span>Campo preparado para histórico clínico</span>
+            </article>
+            <article class="profile-info-card">
+              <small>Contatos importantes</small>
+              <strong id="profileContactSummary">Não informado</strong>
+              <span>Médicos cadastrados na aba Saúde</span>
+            </article>
+            <article class="profile-info-card">
+              <small>Configurações</small>
+              <strong id="profileSettingsSummary">Não informado</strong>
+              <span>Preferências do app</span>
+            </article>
+            <article class="profile-info-card">
+              <small>Backup e sincronização</small>
+              <strong id="profileSyncSummary">Não informado</strong>
+              <span>LocalStorage, backup e Firestore</span>
+            </article>
+            <article class="profile-info-card">
+              <small>Sobre o aplicativo</small>
+              <strong>Meu Bebê</strong>
+              <span>Rotina, saúde e crescimento em um só lugar</span>
+            </article>
+          </section>
 
           <section class="profile-admin-grid">
             <form class="panel profile-form" id="profileForm">
@@ -1095,6 +1175,6 @@
       <option value="Outra observação"></option>
     </datalist>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="script.js?v=22"></script>
+    <script src="script.js?v=23"></script>
   </body>
 </html>

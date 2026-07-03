@@ -907,6 +907,7 @@ function render() {
   $("#alertsToggle").checked = Boolean(state.settings.visualAlerts);
 
   renderProfileForm(baby);
+  renderProfileOverview(baby);
   renderWelcomePanel(baby);
   renderGrowthView(baby);
   renderDashboard(baby);
@@ -931,6 +932,36 @@ function renderProfileForm(baby) {
   form.sex.value = baby.sex || "";
   form.weight.value = baby.weight || "";
   form.height.value = baby.height || "";
+}
+
+function notInformed(value, suffix = "") {
+  if (value === undefined || value === null || value === "") return "Não informado";
+  return `${value}${suffix}`;
+}
+
+function profileBmi(baby) {
+  const weight = Number(baby.weight || 0);
+  const height = Number(baby.height || 0) / 100;
+  if (!weight || !height) return "Não informado";
+  return (weight / (height * height)).toFixed(1).replace(".", ",");
+}
+
+function renderProfileOverview(baby) {
+  const doctors = healthRecords("doctor", baby);
+  $("#profileHeroPhoto").src = baby.photo || "assets/baby-clouds.png";
+  $("#profileHeroName").textContent = baby.name || "Não informado";
+  $("#profileHeroAge").textContent = baby.birthDate ? ageText(baby.birthDate) : "Não informado";
+  $("#profileHeroBirth").textContent = `Nascimento: ${baby.birthDate ? formatOnlyDate(`${baby.birthDate}T12:00`) : "Não informado"}`;
+  $("#profileInfoSummary").textContent = baby.birthDate ? ageText(baby.birthDate) : "Não informado";
+  $("#profileSexSummary").textContent = notInformed(baby.sex);
+  $("#profileWeightSummary").textContent = notInformed(baby.weight, " kg");
+  $("#profileWeightDetail").textContent = getGrowthSummary(baby).weightTrend || "Não informado";
+  $("#profileHeightSummary").textContent = notInformed(baby.height, " cm");
+  $("#profileHeightDetail").textContent = getGrowthSummary(baby).heightTrend || "Não informado";
+  $("#profileBmiSummary").textContent = profileBmi(baby);
+  $("#profileContactSummary").textContent = doctors.length ? `${doctors.length} contato${doctors.length === 1 ? "" : "s"}` : "Não informado";
+  $("#profileSettingsSummary").textContent = state.settings.visualAlerts ? "Alertas ativos" : "Alertas desativados";
+  $("#profileSyncSummary").textContent = authUser ? "Google conectado" : "Backup local";
 }
 
 function renderWelcomePanel(baby) {
@@ -1637,11 +1668,11 @@ function medicineIntervalLabel(record) {
 
 function medicineTreatmentData(data, fallbackDate) {
   const durationDays = cleanNumber(data.durationDays);
-  const treatmentStart = data.treatmentStart || dateOnly(fallbackDate);
+  const treatmentStart = data.treatmentStart || "";
   let treatmentEnd = data.treatmentEnd || "";
   if (!treatmentEnd && durationDays && treatmentStart) {
     const end = new Date(`${treatmentStart}T12:00`);
-    end.setDate(end.getDate() + Number(durationDays) - 1);
+    end.setDate(end.getDate() + Number(durationDays));
     treatmentEnd = dateOnly(end);
   }
   return { durationDays, treatmentStart, treatmentEnd };
@@ -1649,6 +1680,7 @@ function medicineTreatmentData(data, fallbackDate) {
 
 function medicineTreatmentLabel(record) {
   if (!record.durationDays && !record.treatmentStart && !record.treatmentEnd) return "Duração não informada";
+  if (record.treatmentEnd && new Date(`${record.treatmentEnd}T23:59:59`) < new Date()) return "Tratamento concluído";
   const parts = [];
   if (record.durationDays) parts.push(`${record.durationDays} dia${Number(record.durationDays) === 1 ? "" : "s"}`);
   if (record.treatmentStart) parts.push(`início ${formatOnlyDate(`${record.treatmentStart}T12:00`)}`);
@@ -1665,6 +1697,8 @@ function registerMedicine(data) {
     name: data.name.trim() || "Remédio",
     dose: data.dose,
     note: data.note,
+    prescriber: data.prescriber,
+    prescription: data.prescription,
     taken: data.taken,
     intervalHours,
     ...treatment,
@@ -1752,31 +1786,105 @@ function renderMedicineHistory(records) {
     $("#medicineHistory").innerHTML = `<div class="empty">Nenhum remédio registrado ainda.</div>`;
     return;
   }
-  const grouped = records.reduce((groups, record) => {
-    const key = feedDateLabel(record.date);
-    groups[key] = groups[key] || [];
-    groups[key].push(record);
-    return groups;
-  }, {});
-  $("#medicineHistory").innerHTML = Object.entries(grouped).map(([label, items]) => `
-    <section class="feed-day-group">
-      <h4>${esc(label)}</h4>
-      ${items.map((record) => `
-        <article class="feed-history-item">
-          <div>
-            <strong>${esc(record.name || "Remédio")}</strong>
-            <span>${esc(formatClock(record.date))} · ${esc(record.dose || "Quantidade não informada")}</span>
-            <small><strong>Tomou?</strong> ${esc(record.taken === "yes" ? "Sim" : record.taken === "no" ? "Não" : "Não informado")}</small>
-            <small>${esc(medicineTreatmentLabel(record))} · Intervalo: ${esc(medicineIntervalLabel(record))} · Próxima dose: ${esc(formatFullDateTime(medicineNextDate(record)))}${record.note ? ` · ${esc(record.note)}` : ""}</small>
-          </div>
-          <div class="feed-history-actions">
-            <button type="button" data-edit-medicine="${esc(record.id)}" aria-label="Editar remédio">✎</button>
-            <button type="button" data-delete-medicine="${esc(record.id)}" aria-label="Excluir remédio">×</button>
-          </div>
-        </article>
-      `).join("")}
-    </section>
-  `).join("");
+  $("#medicineHistory").innerHTML = records.map((record) => renderMedicineCard(record)).join("");
+}
+
+function medicineDoseKey(date) {
+  const value = new Date(date);
+  if (Number.isNaN(value.getTime())) return "";
+  value.setSeconds(0, 0);
+  return value.toISOString().slice(0, 16);
+}
+
+function medicineDoseLog(record) {
+  return record.doseLog && typeof record.doseLog === "object" ? record.doseLog : {};
+}
+
+function medicineDosesForToday(record) {
+  const interval = Number(record.intervalHours || 0) || 8;
+  const base = new Date(record.date || record.createdAt || Date.now());
+  const start = record.treatmentStart ? new Date(`${record.treatmentStart}T00:00`) : new Date();
+  const today = new Date();
+  const day = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  if (record.treatmentEnd && new Date(`${record.treatmentEnd}T23:59:59`) < day) return [];
+  if (record.treatmentStart && start > new Date(day.getTime() + 24 * 60 * 60000)) return [];
+  const first = new Date(day);
+  first.setHours(base.getHours(), base.getMinutes(), 0, 0);
+  return [0, 1, 2, 3]
+    .map((index) => new Date(first.getTime() + index * interval * 60 * 60000))
+    .filter((date, index, list) => index < 3 || date.getDate() === day.getDate())
+    .slice(0, 4);
+}
+
+function medicineDoseStatus(record, date) {
+  const log = medicineDoseLog(record);
+  const key = medicineDoseKey(date);
+  if (log[key] === "taken") return "taken";
+  if (log[key] === "missed") return "late";
+  return new Date(date) < new Date() ? "late" : "pending";
+}
+
+function medicineDoseLabel(status) {
+  if (status === "taken") return "Tomado";
+  if (status === "late") return "Atrasado";
+  return "Pendente";
+}
+
+function nextPendingMedicineDose(record) {
+  const doses = medicineDosesForToday(record);
+  return doses.find((date) => medicineDoseStatus(record, date) !== "taken") || medicineNextDate(record);
+}
+
+function renderMedicineCard(record) {
+  const doses = medicineDosesForToday(record);
+  const nextDose = nextPendingMedicineDose(record);
+  const takenCount = Object.values(medicineDoseLog(record)).filter((value) => value === "taken").length + (record.taken === "yes" ? 1 : 0);
+  const missedCount = Object.values(medicineDoseLog(record)).filter((value) => value === "missed").length + (record.taken === "no" ? 1 : 0);
+  return `
+    <article class="medicine-control-card">
+      <header>
+        <div>
+          <strong>${esc(record.name || "Remédio")}</strong>
+          <span>${esc(medicineIntervalLabel(record))}</span>
+        </div>
+        <div class="feed-history-actions">
+          <button type="button" data-edit-medicine="${esc(record.id)}" aria-label="Editar remédio">✎</button>
+          <button type="button" data-delete-medicine="${esc(record.id)}" aria-label="Excluir remédio">×</button>
+        </div>
+      </header>
+      <div class="medicine-next-dose">
+        <small>Próxima dose</small>
+        <strong>${esc(formatClock(nextDose))}</strong>
+        <span>${nextDose > new Date() ? `Faltam ${esc(formatDuration(nextDose - new Date()))}` : "Aguardando confirmação"}</span>
+      </div>
+      <div class="medicine-dose-list">
+        <h4>Hoje</h4>
+        ${doses.length ? doses.map((date) => {
+          const status = medicineDoseStatus(record, date);
+          return `
+            <button type="button" data-toggle-dose="${esc(record.id)}" data-dose-key="${esc(medicineDoseKey(date))}" class="medicine-dose-row">
+              <i class="dose-dot ${esc(status)}"></i>
+              <strong>${esc(formatClock(date))}</strong>
+              <span>${esc(medicineDoseLabel(status))}</span>
+            </button>
+          `;
+        }).join("") : `<p>Tratamento concluído</p>`}
+      </div>
+      <details class="medicine-history-detail">
+        <summary>Histórico e tratamento</summary>
+        <div>
+          <span>Tomadas: ${esc(takenCount)}</span>
+          <span>Não tomadas/atrasadas: ${esc(missedCount)}</span>
+          <span>Início: ${esc(record.treatmentStart ? formatOnlyDate(`${record.treatmentStart}T12:00`) : "Não informado")}</span>
+          <span>Final: ${esc(record.treatmentEnd ? formatOnlyDate(`${record.treatmentEnd}T12:00`) : "Não informado")}</span>
+          <span>${esc(medicineTreatmentLabel(record))}</span>
+          <span>Médico: ${esc(record.prescriber || "Não informado")}</span>
+          <span>Receita: ${esc(record.prescription || "Não informado")}</span>
+          <span>${esc(record.note || "Observações: Não informado")}</span>
+        </div>
+      </details>
+    </article>
+  `;
 }
 
 function openMedicineEdit(id) {
@@ -1793,6 +1901,8 @@ function openMedicineEdit(id) {
   form.elements.durationDays.value = record.durationDays || "";
   form.elements.treatmentStart.value = record.treatmentStart || "";
   form.elements.treatmentEnd.value = record.treatmentEnd || "";
+  form.elements.prescriber.value = record.prescriber || "";
+  form.elements.prescription.value = record.prescription || "";
   form.elements.taken.value = record.taken || "";
   form.elements.note.value = record.note || "";
   form.classList.remove("hidden");
@@ -1802,6 +1912,38 @@ function openMedicineEdit(id) {
 function closeMedicineEdit() {
   $("#medicineEditForm").classList.add("hidden");
   $("#medicineEditForm").reset();
+}
+
+function toggleMedicineDose(recordId, doseKey) {
+  const record = findRecord(recordId);
+  if (!record) return;
+  const doseLog = { ...medicineDoseLog(record) };
+  doseLog[doseKey] = doseLog[doseKey] === "taken" ? "pending" : "taken";
+  updateRecord(recordId, { doseLog });
+  showMedicineFeedback(doseLog[doseKey] === "taken" ? "Dose marcada como tomada." : "Dose desmarcada.");
+}
+
+function markMedicineDose(recordId, doseKey, status = "taken") {
+  const record = findRecord(recordId);
+  if (!record) return;
+  const doseLog = { ...medicineDoseLog(record), [doseKey]: status };
+  updateRecord(recordId, { doseLog });
+}
+
+async function promptDueMedicineDose() {
+  const now = new Date();
+  const due = medicineRecords().flatMap((record) => medicineDosesForToday(record).map((date) => ({ record, date })))
+    .filter(({ record, date }) => date <= now && medicineDoseStatus(record, date) !== "taken")
+    .sort((a, b) => b.date - a.date)[0];
+  if (!due) return;
+  const promptKey = `medicine-dose-prompt:${due.record.id}:${medicineDoseKey(due.date)}`;
+  if (sessionStorage.getItem(promptKey)) return;
+  sessionStorage.setItem(promptKey, "1");
+  const taken = await askDoseConfirmation(due.record.name || "este remédio");
+  if (taken === "yes") {
+    markMedicineDose(due.record.id, medicineDoseKey(due.date), "taken");
+    toast("Dose marcada como tomada.");
+  }
 }
 
 function appointmentRecords(baby = activeBaby()) {
@@ -2286,8 +2428,12 @@ function scheduleMedicineNotifications(baby) {
       medicineNotificationTimers.push(window.setTimeout(() => {
         if (shouldAsk) {
           askDoseConfirmation(record.name || "este remédio").then((taken) => {
-            updateRecord(record.id, { taken });
-            toast(taken === "yes" ? "✅ Dose marcada como tomada." : "⚠️ Dose marcada como não tomada.");
+            if (taken === "yes") {
+              markMedicineDose(record.id, medicineDoseKey(nextDate), "taken");
+              toast("Dose marcada como tomada.");
+            } else {
+              toast("Dose mantida como pendente.");
+            }
           });
           return;
         }
@@ -2816,14 +2962,11 @@ function setupEvents() {
       if (calculated.treatmentEnd) form.elements.treatmentEnd.value = calculated.treatmentEnd;
     });
   });
-  $("#medicineForm").addEventListener("submit", async (event) => {
+  $("#medicineForm").addEventListener("submit", (event) => {
     event.preventDefault();
     const form = event.currentTarget;
     const data = Object.fromEntries(new FormData(form).entries());
     const useOtherDate = $("#medicineOtherDate").checked;
-    if (!data.taken) {
-      data.taken = await askDoseConfirmation(data.name || "este remédio");
-    }
     registerMedicine({ ...data, date: useOtherDate ? data.date : todayInput() });
     form.reset();
     $("#medicineOtherDate").checked = false;
@@ -2832,8 +2975,13 @@ function setupEvents() {
     setDefaultDateFields(form);
   });
   $("#medicineHistory").addEventListener("click", async (event) => {
+    const doseButton = event.target.closest("[data-toggle-dose]");
     const editButton = event.target.closest("[data-edit-medicine]");
     const deleteButton = event.target.closest("[data-delete-medicine]");
+    if (doseButton) {
+      toggleMedicineDose(doseButton.dataset.toggleDose, doseButton.dataset.doseKey);
+      return;
+    }
     if (editButton) openMedicineEdit(editButton.dataset.editMedicine);
     if (deleteButton && await askConfirm("Deseja realmente excluir este medicamento?")) {
       removeRecord(deleteButton.dataset.deleteMedicine);
@@ -2850,6 +2998,8 @@ function setupEvents() {
       name: data.name,
       dose: data.dose,
       note: data.note,
+      prescriber: data.prescriber,
+      prescription: data.prescription,
       taken: data.taken,
       intervalHours: Number(data.intervalHours),
       ...treatment,
@@ -3043,6 +3193,10 @@ function setupEvents() {
     updateBabyPhotoFromInput(event.target);
   });
 
+  $("#profileHeroPhotoInput").addEventListener("change", (event) => {
+    updateBabyPhotoFromInput(event.target);
+  });
+
   function updateBabyPhotoFromInput(input) {
     const file = input.files[0];
     if (!file) return;
@@ -3208,6 +3362,7 @@ function boot() {
   if (location.hash) {
     window.setTimeout(() => openHomeTarget(location.hash.replace("#", "")), 250);
   }
+  window.setTimeout(() => promptDueMedicineDose().catch(() => {}), 2200);
   window.setInterval(render, 60000);
   window.setTimeout(() => $("#splash").classList.add("hide"), 1450);
 
