@@ -21,7 +21,8 @@ const initialState = {
   settings: {
     visualAlerts: true,
     softNight: false,
-    feedIntervalHours: DEFAULT_FEED_INTERVAL_HOURS
+    feedIntervalHours: DEFAULT_FEED_INTERVAL_HOURS,
+    doctorNotes: ""
   },
   babies: [
     {
@@ -905,9 +906,11 @@ function render() {
   $("#babyHeightTrend").textContent = growthSummary.heightTrend;
   $("#babyPhoto").src = baby.photo || "assets/baby-clouds.png";
   $("#alertsToggle").checked = Boolean(state.settings.visualAlerts);
+  $("#nightModeToggle").checked = Boolean(state.settings.softNight);
 
   renderProfileForm(baby);
   renderProfileOverview(baby);
+  renderDoctorNotes();
   renderWelcomePanel(baby);
   renderGrowthView(baby);
   renderDashboard(baby);
@@ -960,8 +963,58 @@ function renderProfileOverview(baby) {
   $("#profileHeightDetail").textContent = getGrowthSummary(baby).heightTrend || "Não informado";
   $("#profileBmiSummary").textContent = profileBmi(baby);
   $("#profileContactSummary").textContent = doctors.length ? `${doctors.length} contato${doctors.length === 1 ? "" : "s"}` : "Não informado";
-  $("#profileSettingsSummary").textContent = state.settings.visualAlerts ? "Alertas ativos" : "Alertas desativados";
+  $("#profileSettingsSummary").textContent = state.settings.softNight ? "Modo noturno ativo" : state.settings.visualAlerts ? "Alertas ativos" : "Alertas desativados";
   $("#profileSyncSummary").textContent = authUser ? "Google conectado" : "Backup local";
+}
+
+function doctorNotesLines() {
+  return String(state.settings.doctorNotes || "").split("\n");
+}
+
+function parseDoctorNoteLine(line) {
+  const checked = /^-\s*\[(x|X|✅)\]\s*/.test(line);
+  const checkable = /^-\s*/.test(line);
+  const text = line
+    .replace(/^-\s*\[(x|X|✅)\]\s*/, "")
+    .replace(/^-\s*\[ \]\s*/, "")
+    .replace(/^-\s*/, "")
+    .trim();
+  return { checked, checkable: checkable && Boolean(text), text };
+}
+
+function renderDoctorNotes() {
+  const input = $("#doctorNotesInput");
+  if (input && input.value !== String(state.settings.doctorNotes || "")) input.value = state.settings.doctorNotes || "";
+  const listHtml = doctorNotesLines().map((line, index) => {
+    const item = parseDoctorNoteLine(line);
+    if (!item.text) return "";
+    if (!item.checkable) return `<p>${esc(item.text)}</p>`;
+    return `
+      <button type="button" class="doctor-note-item ${item.checked ? "done" : ""}" data-doctor-note-index="${index}">
+        <span>${item.checked ? "✅" : "○"}</span>
+        <strong>${esc(item.text)}</strong>
+      </button>
+    `;
+  }).join("");
+  ["#doctorNotesList", "#appointmentDoctorNotesList"].forEach((selector) => {
+    const list = $(selector);
+    if (list) list.innerHTML = listHtml || `<small>Nenhuma anotação ainda.</small>`;
+  });
+}
+
+function saveDoctorNotes(value) {
+  state.settings.doctorNotes = value;
+  saveState();
+}
+
+function toggleDoctorNote(index) {
+  const lines = doctorNotesLines();
+  const current = lines[index] || "";
+  const item = parseDoctorNoteLine(current);
+  if (!item.checkable) return;
+  lines[index] = item.checked ? `- [ ] ${item.text}` : `- [x] ${item.text}`;
+  state.settings.doctorNotes = lines.join("\n");
+  saveState();
 }
 
 function renderWelcomePanel(baby) {
@@ -2547,12 +2600,16 @@ function askDoseConfirmation(medicineName = "este remédio") {
   });
 }
 
-function switchTab(tab) {
+function switchTab(tab, options = {}) {
   $$(".view").forEach((view) => view.classList.toggle("active", view.dataset.view === tab));
   document.body.dataset.currentView = tab;
-  const activeTab = tab === "pee" ? "poop" : ["appointment", "vaccine", "doctor"].includes(tab) ? "medicine" : tab;
+  const activeTab = tab === "pee" ? "poop" : tab === "milk" ? "feed" : ["appointment", "vaccine", "doctor"].includes(tab) ? "medicine" : tab;
   $$(".tabbar button").forEach((button) => button.classList.toggle("active", button.dataset.tab === activeTab));
   $$(".subtab-row button[data-health-tab]").forEach((button) => button.classList.toggle("active", button.dataset.healthTab === tab));
+  $$(".subtab-row button[data-food-tab]").forEach((button) => button.classList.toggle("active", button.dataset.foodTab === tab));
+  if (options.updateHash !== false && location.hash.replace("#", "") !== tab) {
+    history.replaceState(null, "", `#${tab}`);
+  }
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -2753,11 +2810,24 @@ function setupEvents() {
     button.addEventListener("click", () => switchTab(button.dataset.healthTab));
   });
 
+  $$(".subtab-row button[data-food-tab]").forEach((button) => {
+    button.addEventListener("click", () => switchTab(button.dataset.foodTab));
+  });
+
+  $$(".subtab-row button[data-tab]").forEach((button) => {
+    button.addEventListener("click", () => switchTab(button.dataset.tab));
+  });
+
   $("#settingsShortcut").addEventListener("click", () => switchTab("tools"));
   $("#notificationsShortcut").addEventListener("click", () => openHomeTarget("notifications"));
   $("#profileShortcut").addEventListener("click", () => switchTab("profile"));
 
   $("#view-home").addEventListener("click", (event) => {
+    const noteButton = event.target.closest("[data-doctor-note-index]");
+    if (noteButton) {
+      toggleDoctorNote(Number(noteButton.dataset.doctorNoteIndex));
+      return;
+    }
     const formButton = event.target.closest("[data-open-form]");
     if (formButton) {
       openForm(formButton.dataset.openForm);
@@ -3185,8 +3255,19 @@ function setupEvents() {
     toast("Dados simples corrigidos");
   });
 
-  $("#photoInput").addEventListener("change", (event) => {
-    updateBabyPhotoFromInput(event.target);
+  $("#doctorNotesInput").addEventListener("input", (event) => saveDoctorNotes(event.target.value));
+
+  $("#addDoctorChecklistItem").addEventListener("click", () => {
+    const input = $("#doctorNotesInput");
+    const prefix = input.value.trim() ? "\n" : "";
+    input.value = `${input.value}${prefix}- [ ] `;
+    input.focus();
+    saveDoctorNotes(input.value);
+  });
+
+  $("#appointmentDoctorNotesList")?.addEventListener("click", (event) => {
+    const noteButton = event.target.closest("[data-doctor-note-index]");
+    if (noteButton) toggleDoctorNote(Number(noteButton.dataset.doctorNoteIndex));
   });
 
   $("#profilePhotoInput").addEventListener("change", (event) => {
@@ -3260,6 +3341,12 @@ function setupEvents() {
   $("#alertsToggle").addEventListener("change", (event) => {
     state.settings.visualAlerts = event.target.checked;
     saveState();
+  });
+
+  $("#nightModeToggle").addEventListener("change", (event) => {
+    state.settings.softNight = event.target.checked;
+    saveState();
+    toast(event.target.checked ? "Modo noturno ativado" : "Modo noturno desativado");
   });
 
   $("#googleLoginButton").addEventListener("click", async () => {
@@ -3362,6 +3449,10 @@ function boot() {
   if (location.hash) {
     window.setTimeout(() => openHomeTarget(location.hash.replace("#", "")), 250);
   }
+  window.addEventListener("hashchange", () => {
+    const target = location.hash.replace("#", "");
+    if (target) openHomeTarget(target);
+  });
   window.setTimeout(() => promptDueMedicineDose().catch(() => {}), 2200);
   window.setInterval(render, 60000);
   window.setTimeout(() => $("#splash").classList.add("hide"), 1450);

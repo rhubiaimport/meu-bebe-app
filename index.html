@@ -9,7 +9,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="assets/baby-clouds.png" type="image/png">
     <link rel="apple-touch-icon" href="assets/baby-clouds.png">
-    <link rel="stylesheet" href="style.css?v=23">
+    <link rel="stylesheet" href="style.css?v=25">
     <script src="firebase-config.js"></script>
   </head>
   <body>
@@ -34,26 +34,12 @@
         </div>
       </header>
 
-      <section class="auth-panel" id="authPanel" aria-label="Conta Google">
-        <div>
-          <p class="eyebrow">Conta protegida</p>
-          <strong id="authTitle">Entrar para sincronizar</strong>
-          <small id="authStatus">Seus dados continuam salvos neste dispositivo até o login ser configurado.</small>
-        </div>
-        <div class="auth-actions">
-          <button type="button" id="googleLoginButton">Entrar com Google</button>
-          <button type="button" id="googleLogoutButton" class="hidden">Sair da conta</button>
-        </div>
-      </section>
-
       <main class="app-main">
         <section class="view active" id="view-home" data-view="home">
           <article class="baby-hero home-baby-card" data-home-card="profile" tabindex="0" role="button" aria-label="Abrir perfil do bebê">
-            <label class="baby-photo">
-              <input id="photoInput" type="file" accept="image/*">
+            <div class="baby-photo baby-photo-readonly">
               <img id="babyPhoto" src="assets/baby-clouds.png" alt="Foto do bebê">
-              <span>Alterar foto</span>
-            </label>
+            </div>
             <div class="baby-copy">
               <p class="eyebrow">Perfil ativo</p>
               <h2 id="babyNameHero">Bebê</h2>
@@ -67,24 +53,26 @@
 
           <section class="home-dashboard" id="dashboardCards" aria-label="Resumo da rotina"></section>
 
-          <section class="home-quick-panel" aria-label="Atalhos rápidos">
-            <h2>Atalhos rápidos</h2>
-            <div class="quick-actions home-quick-actions">
-              <button type="button" data-open-form="feed">🍼 Registrar mamada</button>
-              <button type="button" data-open-form="milk">🤱 Registrar leite</button>
-              <button type="button" data-open-form="poop">💩 Registrar cocô</button>
-              <button type="button" data-open-form="pee">💧 Registrar xixi</button>
-              <button type="button" data-open-form="medicine">💊 Dar remédio</button>
-              <button type="button" data-open-form="appointment">🩺 Nova consulta</button>
+          <section class="home-quick-panel doctor-notes-panel" aria-label="O que falar para o médico">
+            <div class="section-row">
+              <h2>O que falar para o médico</h2>
+              <button type="button" id="addDoctorChecklistItem">Adicionar item</button>
             </div>
+            <p>Anote dúvidas, sintomas e lembretes. Use uma linha com “-” para criar item marcável.</p>
+            <textarea id="doctorNotesInput" rows="5" placeholder="- Perguntar sobre sono&#10;- Confirmar dose do remédio&#10;Levar exames"></textarea>
+            <div class="doctor-notes-list" id="doctorNotesList"></div>
           </section>
         </section>
 
         <section class="view feed-view" id="view-feed" data-view="feed">
           <div class="feed-background" aria-hidden="true"></div>
           <div class="section-heading feed-heading">
-            <h2>← Mamadas</h2>
-            <p>Acompanhe os horários das mamadas do seu bebê.</p>
+            <h2>← Alimentação</h2>
+            <p>Acompanhe mamadas e leite materno em um só lugar.</p>
+          </div>
+          <div class="subtab-row food-tabs">
+            <button type="button" class="active" data-food-tab="feed">Mamadas</button>
+            <button type="button" data-food-tab="milk">Leite materno</button>
           </div>
 
           <section class="feed-summary-grid" aria-label="Resumo das mamadas">
@@ -204,8 +192,12 @@
         <section class="view milk-view" id="view-milk" data-view="milk">
           <div class="feed-background" aria-hidden="true"></div>
           <div class="section-heading feed-heading">
-            <h2>← Leite Materno</h2>
+            <h2>← Alimentação</h2>
             <p>Controle as retiradas e acompanhe a validade do leite.</p>
+          </div>
+          <div class="subtab-row food-tabs">
+            <button type="button" data-food-tab="feed">Mamadas</button>
+            <button type="button" class="active" data-food-tab="milk">Leite materno</button>
           </div>
 
           <section class="milk-summary-grid" id="milkValidityCards" aria-label="Validade do leite materno"></section>
@@ -632,6 +624,12 @@
             <div class="calendar-detail" id="appointmentCalendarDetail">Toque em um dia com consulta.</div>
           </section>
 
+          <section class="panel doctor-notes-panel">
+            <h3>O que falar para o médico</h3>
+            <p>Itens marcados na tela inicial também aparecem aqui.</p>
+            <div class="doctor-notes-list" id="appointmentDoctorNotesList"></div>
+          </section>
+
           <section class="panel feed-history-panel">
             <h3>Histórico de consultas</h3>
             <div class="feed-history" id="appointmentHistory"></div>
@@ -977,6 +975,18 @@
             </article>
           </section>
 
+          <section class="auth-panel profile-auth-panel" id="authPanel" aria-label="Conta Google">
+            <div>
+              <p class="eyebrow">Conta protegida</p>
+              <strong id="authTitle">Entrar para sincronizar</strong>
+              <small id="authStatus">Seus dados continuam salvos neste dispositivo até o login ser configurado.</small>
+            </div>
+            <div class="auth-actions">
+              <button type="button" id="googleLoginButton">Entrar com Google</button>
+              <button type="button" id="googleLogoutButton" class="hidden">Sair da conta</button>
+            </div>
+          </section>
+
           <section class="profile-admin-grid">
             <form class="panel profile-form" id="profileForm">
               <h3>Dados do bebê</h3>
@@ -1010,6 +1020,15 @@
               <h3>Perfis de bebês</h3>
               <div id="babyProfiles" class="profile-list"></div>
               <button type="button" id="addBaby">👶🏽 Adicionar bebê</button>
+            </article>
+
+            <article class="panel">
+              <h3>Modo noturno</h3>
+              <p>Deixe o app mais confortável para usar à noite.</p>
+              <label class="switch">Ativar modo noturno
+                <input type="checkbox" id="nightModeToggle">
+                <span></span>
+              </label>
             </article>
           </section>
 
@@ -1159,8 +1178,7 @@
 
       <nav class="tabbar" aria-label="Navegação principal">
         <button class="active" type="button" data-tab="home"><span>⌂</span>Início</button>
-        <button type="button" data-tab="feed"><span>🍼</span>Mamadas</button>
-        <button type="button" data-tab="milk"><span>🤱</span>Leite</button>
+        <button type="button" data-tab="feed"><span>🍼</span>Alimentação</button>
         <button type="button" data-tab="poop"><span>☁️</span>Fraldas</button>
         <button type="button" data-tab="medicine"><span>🏥</span>Saúde</button>
         <button type="button" data-tab="profile"><span>👶🏽</span>Perfil</button>
@@ -1175,6 +1193,6 @@
       <option value="Outra observação"></option>
     </datalist>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="script.js?v=23"></script>
+    <script src="script.js?v=25"></script>
   </body>
 </html>
