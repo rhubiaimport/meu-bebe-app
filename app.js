@@ -63,6 +63,51 @@ const formTargets = {
   growth: { form: "growth" }
 };
 
+const pnvSchedule = [
+  {
+    key: "birth",
+    age: "À nascença",
+    months: 0,
+    vaccines: ["Hepatite B (VHB)", "Tuberculose (BCG)"]
+  },
+  {
+    key: "2-months",
+    age: "Aos 2 meses",
+    months: 2,
+    vaccines: ["Hexavalente (DTPa + Hib + VIP + VHB)", "Pneumocócica (Pn20)"]
+  },
+  {
+    key: "4-months",
+    age: "Aos 4 meses",
+    months: 4,
+    vaccines: ["DTPa + Hib + VIP", "Pneumocócica (Pn20)", "Meningite B (MenB)"]
+  },
+  {
+    key: "6-months",
+    age: "Aos 6 meses",
+    months: 6,
+    vaccines: ["Hexavalente (DTPa + Hib + VIP + VHB)"]
+  },
+  {
+    key: "12-months",
+    age: "Aos 12 meses",
+    months: 12,
+    vaccines: ["Pneumocócica (Pn20)", "Sarampo, Papeira e Rubéola (VASPR/Tríplice viral)", "Meningocócica ACWY"]
+  },
+  {
+    key: "5-years",
+    age: "Aos 5 anos",
+    months: 60,
+    vaccines: ["Reforço da Hexavalente", "Reforço da VASPR"]
+  },
+  {
+    key: "10-years",
+    age: "Aos 10 anos",
+    months: 120,
+    vaccines: ["Papiloma Humano (HPV9) em duas doses", "Reforço do Tétano e Difteria (Td)"]
+  }
+];
+
 const eliminationConfig = {
   poop: {
     type: "Cocô",
@@ -1021,9 +1066,9 @@ function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || location.protocol === "file:") return;
   let refreshing = false;
   navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (refreshing || sessionStorage.getItem("meu-bebe:sw-refreshed-v27")) return;
+    if (refreshing || sessionStorage.getItem("meu-bebe:sw-refreshed-v28")) return;
     refreshing = true;
-    sessionStorage.setItem("meu-bebe:sw-refreshed-v27", "1");
+    sessionStorage.setItem("meu-bebe:sw-refreshed-v28", "1");
     window.location.reload();
   });
   navigator.serviceWorker.register("service-worker.js").then((registration) => {
@@ -2230,30 +2275,114 @@ function showHealthFeedback(selector, message) {
 
 function renderVaccineView(baby) {
   const records = healthRecords("vaccine", baby);
-  const nextDose = records
-    .filter((record) => record.nextDose && new Date(`${record.nextDose}T12:00`) >= new Date())
-    .sort((a, b) => new Date(`${a.nextDose}T12:00`) - new Date(`${b.nextDose}T12:00`))[0];
+  const pnvItems = pnvSchedule.map((item) => pnvState(item, baby));
+  const nextDose = pnvItems
+    .filter((item) => item.status !== "taken")
+    .sort((a, b) => {
+      if (!a.dueDate) return 1;
+      if (!b.dueDate) return -1;
+      return a.dueDate - b.dueDate;
+    })[0] || records
+      .filter((record) => record.nextDose && new Date(`${record.nextDose}T12:00`) >= new Date())
+      .sort((a, b) => new Date(`${a.nextDose}T12:00`) - new Date(`${b.nextDose}T12:00`))[0];
   $("#vaccineSummary").innerHTML = [
-    ["💉 Vacinas", records.length],
-    ["📅 Próxima dose", nextDose ? formatOnlyDate(`${nextDose.nextDose}T12:00`) : "--/--/----"]
+    ["💉 PNV tomadas", pnvItems.filter((item) => item.status === "taken").length],
+    ["📅 Próxima dose", nextDose?.dueDate ? formatOnlyDate(nextDose.dueDate) : nextDose?.nextDose ? formatOnlyDate(`${nextDose.nextDose}T12:00`) : "--/--/----"],
+    ["⚠️ Em atraso", pnvItems.filter((item) => item.status === "late").length],
+    ["Registros manuais", records.filter((record) => !record.pnvKey).length]
   ].map(([label, value]) => `
     <article class="feed-summary-card">
       <small>${esc(label)}</small>
       <strong>${esc(value)}</strong>
     </article>
   `).join("");
+  renderVaccineSchedule(baby);
   $("#vaccineHistory").innerHTML = records.length ? records.map((record) => `
     <article class="feed-history-item">
       <div>
         <strong>${esc(record.name || "Vacina")}</strong>
-        <span>${esc(formatOnlyDate(record.date))}${record.nextDose ? ` · Próxima: ${esc(formatOnlyDate(`${record.nextDose}T12:00`))}` : ""}</span>
-        <small>${esc(record.place || "Local não informado")}${record.note ? ` · ${esc(record.note)}` : ""}</small>
+        <span>${esc(record.pnvAge || formatOnlyDate(record.date))}${record.nextDose ? ` · Próxima: ${esc(formatOnlyDate(`${record.nextDose}T12:00`))}` : ""}</span>
+        <small>${esc(vaccineRecordStatus(record))}${record.place ? ` · ${esc(record.place)}` : ""}${record.note ? ` · ${esc(record.note)}` : ""}</small>
       </div>
       <div class="feed-history-actions">
         <button type="button" data-delete-vaccine="${esc(record.id)}" aria-label="Excluir vacina">×</button>
       </div>
     </article>
   `).join("") : `<div class="empty">Nenhuma vacina cadastrada ainda.</div>`;
+}
+
+function pnvDueDate(baby, item) {
+  if (!baby.birthDate) return null;
+  return addMonths(`${baby.birthDate}T12:00`, item.months);
+}
+
+function pnvRecord(item, baby = activeBaby()) {
+  return healthRecords("vaccine", baby).find((record) => record.pnvKey === item.key);
+}
+
+function pnvState(item, baby = activeBaby()) {
+  const record = pnvRecord(item, baby);
+  const dueDate = pnvDueDate(baby, item);
+  const savedStatus = record?.pnvStatus || (record?.taken === "yes" ? "taken" : record?.taken === "no" ? "not-taken" : "");
+  const status = savedStatus || (dueDate && dueDate < new Date() ? "late" : "pending");
+  return { ...item, dueDate, record, status, note: record?.note || record?.pnvNote || "" };
+}
+
+function vaccineStatusLabel(status) {
+  if (status === "taken") return "Tomou";
+  if (status === "not-taken") return "Não tomou";
+  if (status === "late") return "Em atraso";
+  return "Pendente";
+}
+
+function vaccineRecordStatus(record) {
+  if (record.pnvStatus) return `PNV: ${vaccineStatusLabel(record.pnvStatus)}`;
+  if (record.taken === "yes") return "Tomou";
+  if (record.taken === "no") return "Não tomou";
+  return "Status não informado";
+}
+
+function renderVaccineSchedule(baby) {
+  const rows = pnvSchedule.map((item) => pnvState(item, baby));
+  $("#vaccineSchedule").innerHTML = rows.map((item) => `
+    <article class="pnv-card ${esc(item.status)}">
+      <header>
+        <div>
+          <small>${esc(item.age)}</small>
+          <strong>${esc(item.vaccines.join(" + "))}</strong>
+          <span>${item.dueDate ? `Deve tomar em ${esc(formatOnlyDate(item.dueDate))}` : "Informe a data de nascimento no Perfil para calcular a data"}</span>
+        </div>
+        <b>${esc(vaccineStatusLabel(item.status))}</b>
+      </header>
+      <div class="pnv-actions">
+        <button type="button" data-pnv-status="taken" data-pnv-key="${esc(item.key)}">Tomou</button>
+        <button type="button" data-pnv-status="not-taken" data-pnv-key="${esc(item.key)}">Não tomou</button>
+      </div>
+      <label>Observação opcional
+        <textarea data-pnv-note="${esc(item.key)}" rows="2" placeholder="Ex: tomou no centro de saúde, reação, lote...">${esc(item.note)}</textarea>
+      </label>
+    </article>
+  `).join("");
+}
+
+function savePnvRecord(key, updates = {}) {
+  const item = pnvSchedule.find((entry) => entry.key === key);
+  if (!item) return;
+  const baby = activeBaby();
+  const existing = pnvRecord(item, baby);
+  const dueDate = pnvDueDate(baby, item);
+  const payload = {
+    name: item.vaccines.join(" + "),
+    pnvKey: item.key,
+    pnvAge: item.age,
+    place: existing?.place || "",
+    nextDose: "",
+    date: existing?.date || (dueDate ? dueDate.toISOString() : new Date().toISOString()),
+    ...updates
+  };
+  payload.taken = payload.pnvStatus === "taken" ? "yes" : payload.pnvStatus === "not-taken" ? "no" : (existing?.taken || "");
+  if (existing) updateRecord(existing.id, payload);
+  else addRecord("vaccine", payload);
 }
 
 function renderDoctorView(baby) {
@@ -3205,6 +3334,7 @@ function setupEvents() {
     addRecord("vaccine", {
       name: data.name || "Vacina",
       nextDose: data.nextDose,
+      taken: data.taken,
       place: data.place,
       note: data.note,
       date: data.date ? `${data.date}T12:00` : new Date().toISOString()
@@ -3212,6 +3342,27 @@ function setupEvents() {
     form.reset();
     hideVaccineForm();
     showHealthFeedback("#vaccineFeedback", "✅ Vacina registrada.");
+  });
+  $("#vaccineSchedule").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-pnv-status]");
+    if (!button) return;
+    savePnvRecord(button.dataset.pnvKey, { pnvStatus: button.dataset.pnvStatus });
+    showHealthFeedback("#vaccineFeedback", button.dataset.pnvStatus === "taken" ? "✅ Vacina marcada como tomada." : "Vacina marcada como não tomada.");
+  });
+  $("#vaccineSchedule").addEventListener("change", (event) => {
+    const field = event.target.closest("[data-pnv-note]");
+    if (!field) return;
+    savePnvRecord(field.dataset.pnvNote, { note: field.value, pnvNote: field.value });
+    showHealthFeedback("#vaccineFeedback", "Observação da vacina salva.");
+  });
+  $("#vaccineSchedule").addEventListener("input", (event) => {
+    const field = event.target.closest("[data-pnv-note]");
+    if (!field) return;
+    window.clearTimeout(field.saveTimer);
+    field.saveTimer = window.setTimeout(() => {
+      savePnvRecord(field.dataset.pnvNote, { note: field.value, pnvNote: field.value });
+      showHealthFeedback("#vaccineFeedback", "Observação da vacina salva.");
+    }, 650);
   });
   $("#vaccineHistory").addEventListener("click", async (event) => {
     const deleteButton = event.target.closest("[data-delete-vaccine]");

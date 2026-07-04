@@ -9,7 +9,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="assets/baby-clouds.png" type="image/png">
     <link rel="apple-touch-icon" href="assets/baby-clouds.png">
-    <link rel="stylesheet" href="style.css?v=27">
+    <link rel="stylesheet" href="style.css?v=28">
     <script src="firebase-config.js"></script>
   </head>
   <body>
@@ -702,6 +702,13 @@
               <label>Próxima dose
                 <input name="nextDose" type="date">
               </label>
+              <label>Tomou?
+                <select name="taken">
+                  <option value="">Não informar</option>
+                  <option value="yes">Sim, tomou</option>
+                  <option value="no">Não tomou</option>
+                </select>
+              </label>
               <label>Local
                 <input name="place" type="text" placeholder="Opcional">
               </label>
@@ -714,6 +721,16 @@
               <button type="button" id="cancelVaccineForm">Cancelar</button>
             </div>
           </form>
+
+          <section class="panel pnv-panel">
+            <div class="section-row">
+              <div>
+                <h3>Plano Nacional de Vacinação</h3>
+                <p>Marque cada etapa como tomada ou não tomada. As observações são opcionais.</p>
+              </div>
+            </div>
+            <div class="pnv-list" id="vaccineSchedule"></div>
+          </section>
 
           <section class="panel feed-history-panel">
             <h3>Histórico de vacinas</h3>
@@ -1193,6 +1210,6 @@
       <option value="Outra observação"></option>
     </datalist>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="script.js?v=27"></script>
+    <script src="script.js?v=28"></script>
   </body>
 </html>
