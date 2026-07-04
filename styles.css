@@ -4,6 +4,7 @@
   --surface-soft: #f4f8fa;
   --blue: #bfe4f8;
   --blue-strong: #7bbfe2;
+  --blue-deep: #2b7da8;
   --beige: #f4ead9;
   --text: #26343d;
   --muted: #6e7d86;
@@ -39,6 +40,7 @@ body.soft-night {
   --surface-soft: #202d38;
   --blue: #244d67;
   --blue-strong: #8dcdf0;
+  --blue-deep: #8dcdf0;
   --beige: #27313a;
   --text: #edf6fb;
   --muted: #a7b8c3;
@@ -285,6 +287,8 @@ body.soft-night .panel,
 body.soft-night .stat-card,
 body.soft-night .home-card,
 body.soft-night .home-quick-panel,
+body.soft-night .today-focus,
+body.soft-night .today-card,
 body.soft-night .feed-summary-card,
 body.soft-night .feed-stat-card,
 body.soft-night .feed-edit-panel,
@@ -309,8 +313,8 @@ body.soft-night textarea {
   grid-template-columns: auto 1fr;
   align-items: center;
   gap: 18px;
-  padding: 18px;
-  border-radius: 26px;
+  padding: 16px;
+  border-radius: 24px;
 }
 
 .baby-photo {
@@ -458,16 +462,157 @@ body.soft-night textarea {
   text-decoration: line-through;
 }
 
+.app-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  min-width: 42px;
+  height: 42px;
+  border-radius: 16px;
+  color: var(--blue-deep);
+  background:
+    radial-gradient(circle at 34% 24%, rgba(255, 255, 255, 0.9) 0 22%, transparent 23%),
+    linear-gradient(135deg, rgba(191, 228, 248, 0.95), rgba(255, 255, 255, 0.92));
+  box-shadow: inset 0 0 0 1px rgba(123, 191, 226, 0.22);
+}
+
+.app-icon::before {
+  content: "";
+  width: 21px;
+  height: 21px;
+  display: block;
+  background: currentColor;
+  mask: var(--icon-mask) center / contain no-repeat;
+  -webkit-mask: var(--icon-mask) center / contain no-repeat;
+}
+
+.app-icon-baby {
+  --icon-mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 4a4 4 0 0 1 4 4v1h1a3 3 0 0 1 3 3v2a8 8 0 0 1-16 0v-2a3 3 0 0 1 3-3h1V8a4 4 0 0 1 4-4Zm-2 9.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm4 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm-4 3.1c1.1.8 2.9.8 4 0 .4-.3.5-.8.2-1.2s-.8-.5-1.2-.2c-.5.4-1.5.4-2 0-.4-.3-.9-.2-1.2.2s-.2.9.2 1.2Z'/%3E%3C/svg%3E");
+}
+
+.app-icon-bottle,
+.app-icon-milk {
+  --icon-mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M9 2h6v4l-1.2 1.5c1.4.7 2.2 2 2.2 3.5v8a3 3 0 0 1-3 3h-2a3 3 0 0 1-3-3v-8c0-1.5.8-2.8 2.2-3.5L9 6V2Zm2 2v1.3l1 1.2 1-1.2V4h-2Zm-1 9h4v-2a2 2 0 0 0-4 0v2Zm0 2v4a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-4h-4Z'/%3E%3C/svg%3E");
+}
+
+.app-icon-pill {
+  --icon-mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.6 14.4 11.4 7.6a5 5 0 1 1 7.1 7.1l-6.8 6.8a5 5 0 0 1-7.1-7.1Zm8.2-5.4-2.6 2.6 5.2 5.2 2.6-2.6a3.7 3.7 0 0 0-5.2-5.2ZM8.8 13 6 15.8A3.7 3.7 0 0 0 11.2 21l2.8-2.8L8.8 13Z'/%3E%3C/svg%3E");
+}
+
+.app-icon-calendar {
+  --icon-mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1a3 3 0 0 1 3 3v11a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V7a3 3 0 0 1 3-3h1V3a1 1 0 0 1 1-1Zm13 8H4v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8ZM6 13h3v3H6v-3Zm5 0h3v3h-3v-3Z'/%3E%3C/svg%3E");
+}
+
+.app-icon-diaper {
+  --icon-mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v6a9 9 0 0 1-18 0V5Zm2 0v4.5c2.3.4 4.3 1.6 6 3.5 1.7-1.9 3.7-3.1 6-3.5V5H6Zm12 6.6c-1.8.4-3.3 1.5-4.7 3.3a1.6 1.6 0 0 1-2.6 0c-1.4-1.8-2.9-2.9-4.7-3.3A7 7 0 0 0 18 11.6Z'/%3E%3C/svg%3E");
+}
+
+.app-icon-drop {
+  --icon-mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 2s7 7.3 7 13a7 7 0 0 1-14 0c0-5.7 7-13 7-13Zm0 18a5 5 0 0 0 5-5c0-3.2-3.1-7.5-5-9.8C10.1 7.5 7 11.8 7 15a5 5 0 0 0 5 5Z'/%3E%3C/svg%3E");
+}
+
 .home-dashboard {
+  display: grid;
+  gap: 14px;
+  margin: 16px 0;
+}
+
+.today-focus {
+  display: grid;
+  grid-template-columns: 0.72fr 1.28fr;
+  gap: 14px;
+  align-items: stretch;
+  padding: 16px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(230, 238, 242, 0.9);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(14px);
+}
+
+.today-focus-copy {
+  display: grid;
+  align-content: center;
+  min-height: 142px;
+  padding: 18px;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.82), transparent 46%),
+    linear-gradient(145deg, rgba(191, 228, 248, 0.78), rgba(244, 234, 217, 0.54));
+}
+
+.today-focus-copy h2 {
+  margin: 0;
+  font-size: clamp(1.45rem, 4vw, 2.2rem);
+  letter-spacing: 0;
+}
+
+.today-focus-copy small {
+  margin-top: 8px;
+  color: var(--muted);
+  font-weight: 850;
+  text-transform: capitalize;
+}
+
+.today-focus-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.today-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: center;
+  min-height: 142px;
+  padding: 14px;
+  border-radius: 22px;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(230, 238, 242, 0.92);
+  box-shadow: 0 12px 28px rgba(84, 125, 145, 0.1);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.today-card:hover,
+.today-card:focus-visible {
+  border-color: rgba(123, 191, 226, 0.72);
+  box-shadow: 0 18px 38px rgba(84, 125, 145, 0.16);
+  outline: none;
+  transform: translateY(-2px);
+}
+
+.today-card small,
+.today-card em {
+  display: block;
+  color: var(--muted);
+  font-style: normal;
+  line-height: 1.35;
+}
+
+.today-card small {
+  font-weight: 900;
+}
+
+.today-card strong {
+  display: block;
+  margin: 5px 0;
+  font-size: clamp(1.15rem, 3.6vw, 1.55rem);
+  overflow-wrap: anywhere;
+}
+
+.routine-grid {
+  display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  margin: 18px 0;
+  gap: 12px;
 }
 
 .home-card {
   grid-column: span 4;
-  min-height: 208px;
-  padding: 15px;
-  border-radius: 22px;
+  min-height: 184px;
+  padding: 14px;
+  border-radius: 20px;
   cursor: pointer;
   transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
 }
@@ -500,24 +645,13 @@ body.soft-night textarea {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 14px;
-}
-
-.home-card header span {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  min-width: 44px;
-  height: 44px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, var(--blue), #ffffff);
-  font-size: 1.35rem;
+  margin-bottom: 12px;
 }
 
 .home-card h3,
 .home-quick-panel h2 {
   margin: 0;
-  font-size: 1.16rem;
+  font-size: 1.08rem;
 }
 
 .home-card-lines {
@@ -763,6 +897,11 @@ body.soft-night textarea {
   box-shadow: 0 10px 26px rgba(95, 142, 166, 0.16);
 }
 
+.food-tabs {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: min(520px, 100%);
+}
+
 .medicine-legend {
   display: flex;
   flex-wrap: wrap;
@@ -792,7 +931,7 @@ body.soft-night textarea {
 
 .medicine-control-card {
   overflow: hidden;
-  border-radius: 28px;
+  border-radius: 24px;
   background: rgba(255, 255, 255, 0.94);
   border: 1px solid rgba(230, 238, 242, 0.98);
   box-shadow: 0 18px 42px rgba(84, 125, 145, 0.12);
@@ -803,7 +942,7 @@ body.soft-night textarea {
   justify-content: space-between;
   gap: 12px;
   align-items: center;
-  padding: 18px;
+  padding: 16px;
   background: linear-gradient(135deg, rgba(191, 228, 248, 0.52), rgba(255, 255, 255, 0.92));
 }
 
@@ -823,9 +962,9 @@ body.soft-night textarea {
 }
 
 .medicine-next-dose {
-  margin: 14px;
-  padding: 16px;
-  border-radius: 22px;
+  margin: 12px;
+  padding: 14px;
+  border-radius: 20px;
   background: var(--surface-soft);
 }
 
@@ -844,7 +983,7 @@ body.soft-night textarea {
   grid-template-columns: auto 1fr auto;
   gap: 12px;
   align-items: center;
-  min-height: 58px;
+  min-height: 54px;
   padding: 0 12px;
   border-radius: 18px;
   background: #fff;
@@ -1474,8 +1613,8 @@ form button,
   gap: 18px;
   align-items: center;
   margin-bottom: 16px;
-  padding: 20px;
-  border-radius: 30px;
+  padding: 18px;
+  border-radius: 26px;
   background: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(230, 238, 242, 0.95);
   box-shadow: 0 18px 42px rgba(84, 125, 145, 0.13);
@@ -1537,9 +1676,9 @@ form button,
 }
 
 .profile-info-card {
-  min-height: 118px;
-  padding: 16px;
-  border-radius: 24px;
+  min-height: 106px;
+  padding: 14px;
+  border-radius: 22px;
   background: rgba(255, 255, 255, 0.9);
   border: 1px solid rgba(230, 238, 242, 0.95);
   box-shadow: 0 12px 28px rgba(84, 125, 145, 0.1);
@@ -1560,7 +1699,7 @@ form button,
 .profile-info-card strong {
   display: block;
   margin-bottom: 6px;
-  font-size: 1.16rem;
+  font-size: 1.08rem;
 }
 
 .profile-form {
@@ -1694,19 +1833,19 @@ form button,
   width: min(900px, calc(100% - 32px));
   margin: 0 auto;
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 6px;
-  padding: 8px;
-  border: 1px solid rgba(230, 238, 242, 0.9);
-  border-radius: 24px;
+  padding: 7px;
+  border: 1px solid rgba(230, 238, 242, 0.92);
+  border-radius: 22px;
   background: rgba(255, 255, 255, 0.9);
   box-shadow: 0 18px 40px rgba(70, 104, 121, 0.18);
   backdrop-filter: blur(16px);
 }
 
 .tabbar button {
-  min-height: 58px;
-  border-radius: 17px;
+  min-height: 54px;
+  border-radius: 16px;
   background: transparent;
   box-shadow: none;
   color: var(--muted);
@@ -1717,7 +1856,7 @@ form button,
 .tabbar button span {
   display: block;
   margin-bottom: 2px;
-  font-size: 1.24rem;
+  font-size: 1.15rem;
 }
 
 .tabbar button.active {
@@ -1879,6 +2018,14 @@ form button,
   .home-card:nth-child(3) {
     grid-column: span 6;
   }
+
+  .today-focus {
+    grid-template-columns: 1fr;
+  }
+
+  .today-focus-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 680px) {
@@ -1969,6 +2116,7 @@ form button,
 
   .dashboard-grid,
   .home-quick-actions,
+  .today-focus-grid,
   .feed-summary-grid,
   .feed-stats-grid,
   .elimination-summary,
@@ -2033,6 +2181,10 @@ form button,
     grid-template-columns: 1fr;
   }
 
+  .routine-grid {
+    grid-template-columns: 1fr;
+  }
+
   .home-card,
   .home-card:first-child,
   .home-card:nth-child(2),
@@ -2064,7 +2216,7 @@ form button,
     left: 8px;
     right: 8px;
     width: calc(100% - 16px);
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     border-radius: 20px;
   }
 

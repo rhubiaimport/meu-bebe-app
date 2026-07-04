@@ -1031,23 +1031,50 @@ function renderDashboard(baby) {
   const appointment = getAppointmentSummary(records);
   const growth = getGrowthSummary(baby);
 
-  const cards = [
+  const focusCards = [
+    {
+      key: "feed",
+      title: "Próxima mamada",
+      icon: "bottle",
+      value: feed.nextTime,
+      meta: feed.countdown === "Sem registro" ? "Nenhuma mamada registrada" : `Faltam ${feed.countdown}`,
+      tone: feed.countdown === "Agora" ? "soon" : ""
+    },
+    {
+      key: "medicine",
+      title: "Próximo remédio",
+      icon: "pill",
+      value: medicine.name,
+      meta: medicine.time === "--:--" ? "Nenhum remédio agendado" : `${medicine.time} · ${medicine.countdown}`,
+      tone: medicine.countdown === "Agora" ? "soon" : ""
+    },
+    {
+      key: "appointment",
+      title: "Próxima consulta",
+      icon: "calendar",
+      value: appointment.doctor,
+      meta: appointment.date === "--" ? "Nenhuma consulta marcada" : `${appointment.date} · ${appointment.time}`,
+      tone: ""
+    }
+  ];
+
+  const routineCards = [
     {
       key: "profile",
       title: "Dados do bebê",
-      icon: "👶🏽",
+      icon: "baby",
       lines: [
         ["Nome", baby.name],
         ["Idade", ageText(baby.birthDate)],
-        ["⚖️ Peso atual", `${baby.weight || "--"} kg · ${growth.weightStatus}`],
+        ["Peso atual", `${baby.weight || "--"} kg · ${growth.weightStatus}`],
         ["Diferença", growth.weightTrend],
-        ["📏 Tamanho atual", `${baby.height || "--"} cm · ${growth.heightTrend}`]
+        ["Tamanho atual", `${baby.height || "--"} cm · ${growth.heightTrend}`]
       ]
     },
     {
       key: "feed",
       title: "Mamadas",
-      icon: "🍼",
+      icon: "bottle",
       lines: [
         ["Última", feed.lastTime],
         ["Próxima", feed.nextTime],
@@ -1058,20 +1085,20 @@ function renderDashboard(baby) {
     {
       key: "milk",
       title: "Leite materno",
-      icon: "🤱",
+      icon: "milk",
       lines: [
         ["Última retirada", milk.lastTime],
         ["Quantidade", milk.amount],
-        ["🏠 Ambiente", milk.ambient],
-        ["❄️ Geladeira", milk.fridge],
-        ["🧊 Congelador", milk.freezer],
+        ["Ambiente", milk.ambient],
+        ["Geladeira", milk.fridge],
+        ["Congelador", milk.freezer],
         ["Tempo restante", milk.remaining]
       ]
     },
     {
       key: "poop",
       title: "Cocô",
-      icon: "💩",
+      icon: "diaper",
       lines: [
         ["Cocôs hoje", diaper.poopCount],
         ["Último registro", diaper.lastPoop]
@@ -1080,7 +1107,7 @@ function renderDashboard(baby) {
     {
       key: "pee",
       title: "Xixi",
-      icon: "💧",
+      icon: "drop",
       lines: [
         ["Xixis hoje", diaper.peeCount],
         ["Último registro", diaper.lastPee]
@@ -1089,7 +1116,7 @@ function renderDashboard(baby) {
     {
       key: "medicine",
       title: "Remédios",
-      icon: "💊",
+      icon: "pill",
       lines: [
         ["Próximo remédio", medicine.name],
         ["Horário", medicine.time],
@@ -1099,31 +1126,54 @@ function renderDashboard(baby) {
     {
       key: "appointment",
       title: "Consultas",
-      icon: "🩺",
+      icon: "calendar",
       lines: [
         ["Especialidade", appointment.doctor],
-        ["📅 Data", appointment.date],
-        ["🕒 Horário", appointment.time]
+        ["Data", appointment.date],
+        ["Horário", appointment.time]
       ]
     }
   ];
 
-  $("#dashboardCards").innerHTML = cards.map((card) => `
-    <article class="home-card" data-home-card="${esc(card.key)}" tabindex="0" role="button" aria-label="Abrir ${esc(card.title)}">
-      <header>
-        <span>${esc(card.icon)}</span>
-        <h3>${esc(card.title)}</h3>
-      </header>
-      <div class="home-card-lines">
-        ${card.lines.map(([label, value]) => `
-          <div>
-            <small>${esc(label)}</small>
-            <strong>${esc(value)}</strong>
-          </div>
+  $("#dashboardCards").innerHTML = `
+    <section class="today-focus" aria-label="Resumo de hoje">
+      <div class="today-focus-copy">
+        <p class="eyebrow">Hoje</p>
+        <h2>O que precisa de atenção</h2>
+        <small>${esc(new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" }))}</small>
+      </div>
+      <div class="today-focus-grid">
+        ${focusCards.map((card) => `
+          <article class="today-card ${esc(card.tone)}" data-home-card="${esc(card.key)}" tabindex="0" role="button" aria-label="Abrir ${esc(card.title)}">
+            <span class="app-icon app-icon-${esc(card.icon)}" aria-hidden="true"></span>
+            <div>
+              <small>${esc(card.title)}</small>
+              <strong>${esc(card.value)}</strong>
+              <em>${esc(card.meta)}</em>
+            </div>
+          </article>
         `).join("")}
       </div>
-    </article>
-  `).join("");
+    </section>
+    <section class="routine-grid" aria-label="Rotina completa">
+      ${routineCards.map((card) => `
+        <article class="home-card" data-home-card="${esc(card.key)}" tabindex="0" role="button" aria-label="Abrir ${esc(card.title)}">
+          <header>
+            <span class="app-icon app-icon-${esc(card.icon)}" aria-hidden="true"></span>
+            <h3>${esc(card.title)}</h3>
+          </header>
+          <div class="home-card-lines">
+            ${card.lines.map(([label, value]) => `
+              <div>
+                <small>${esc(label)}</small>
+                <strong>${esc(value)}</strong>
+              </div>
+            `).join("")}
+          </div>
+        </article>
+      `).join("")}
+    </section>
+  `;
 }
 
 function getGrowthSummary(baby) {
