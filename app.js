@@ -1017,6 +1017,20 @@ function toggleDoctorNote(index) {
   saveState();
 }
 
+function registerServiceWorker() {
+  if (!("serviceWorker" in navigator) || location.protocol === "file:") return;
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (refreshing || sessionStorage.getItem("meu-bebe:sw-refreshed-v27")) return;
+    refreshing = true;
+    sessionStorage.setItem("meu-bebe:sw-refreshed-v27", "1");
+    window.location.reload();
+  });
+  navigator.serviceWorker.register("service-worker.js").then((registration) => {
+    registration.update?.();
+  }).catch(() => {});
+}
+
 function renderWelcomePanel(baby) {
   const shouldShow = !localStorage.getItem(`${activeStorageKey}:welcomed`) && (!baby.name || baby.name === "Bebê");
   $("#welcomePanel")?.classList.toggle("hidden", !shouldShow);
@@ -3507,9 +3521,7 @@ function boot() {
   window.setInterval(render, 60000);
   window.setTimeout(() => $("#splash").classList.add("hide"), 1450);
 
-  if ("serviceWorker" in navigator && location.protocol !== "file:") {
-    navigator.serviceWorker.register("service-worker.js").catch(() => {});
-  }
+  registerServiceWorker();
 }
 
 boot();
