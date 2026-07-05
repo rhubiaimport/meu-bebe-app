@@ -1116,21 +1116,56 @@ body.soft-night textarea {
 }
 
 .pnv-tip {
-  padding: 12px;
+  overflow: hidden;
   border: 1px solid rgba(123, 191, 226, 0.22);
   border-radius: 18px;
   background: linear-gradient(135deg, rgba(232, 246, 255, 0.9), rgba(255, 255, 255, 0.9));
 }
 
-.pnv-tip strong {
+.pnv-tip summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 48px;
+  padding: 12px;
+  color: var(--blue-strong);
+  cursor: pointer;
+  font-weight: 900;
+  list-style: none;
+}
+
+.pnv-tip summary::-webkit-details-marker {
+  display: none;
+}
+
+.pnv-tip summary b {
+  padding: 6px 10px;
+  color: var(--blue-strong);
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.pnv-tip[open] summary b {
+  color: #256243;
+  background: rgba(219, 246, 228, 0.95);
+}
+
+.pnv-tip-body {
+  display: grid;
+  gap: 8px;
+  padding: 0 12px 12px;
+}
+
+.pnv-tip-body strong {
   color: var(--blue-strong);
   font-size: 0.9rem;
 }
 
-.pnv-tip p {
-  margin: 6px 0 0;
+.pnv-tip-body p {
+  margin: 0;
   color: var(--text);
   font-size: 0.92rem;
+  line-height: 1.45;
 }
 
 .pnv-actions {

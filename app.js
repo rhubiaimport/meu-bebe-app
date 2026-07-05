@@ -69,49 +69,70 @@ const pnvSchedule = [
     age: "À nascença",
     months: 0,
     vaccines: ["Hepatite B (VHB)", "Tuberculose (BCG)"],
-    tip: "BCG, quando indicada, protege contra formas graves de tuberculose. Bolinha, pequena ferida e cicatriz são esperadas. Hepatite B pode causar dor local, irritabilidade e febre baixa em situações indicadas. Dicas: amamente antes/depois da vacina, ofereça colo, vista roupa confortável, não use pomadas no local e siga a orientação do profissional de saúde sobre medicamentos. Procure atendimento se houver febre alta, especialmente em menores de 3 meses, dificuldade para respirar, convulsão, sonolência excessiva ou reação alérgica intensa."
+    info: "BCG, quando indicada, protege contra formas graves de tuberculose.",
+    reactions: "Bolinha, pequena ferida e cicatriz são esperadas. Hepatite B: dor local, irritabilidade e febre baixa em situações indicadas.",
+    tips: "Amamente antes/depois da vacina, ofereça colo, vista roupa confortável, não use pomadas no local e siga a orientação do profissional de saúde sobre medicamentos.",
+    warning: "Febre alta, especialmente em menores de 3 meses, dificuldade para respirar, convulsão, sonolência excessiva ou reação alérgica intensa."
   },
   {
     key: "2-months",
     age: "Aos 2 meses",
     months: 2,
     vaccines: ["Hexavalente (DTPa + Hib + VIP + VHB)", "Pneumocócica (Pn20)"],
-    tip: "Hexavalente e Pneumocócica podem causar dor na perna, febre, sonolência e irritabilidade. Dicas: amamente antes/depois da vacina, ofereça colo, vista roupa confortável, não use pomadas no local e siga a orientação do profissional de saúde sobre medicamentos. Procure atendimento se houver febre alta, especialmente em menores de 3 meses, dificuldade para respirar, convulsão, sonolência excessiva ou reação alérgica intensa."
+    info: "Hexavalente e Pneumocócica.",
+    reactions: "Dor na perna, febre, sonolência e irritabilidade.",
+    tips: "Amamente antes/depois da vacina, ofereça colo, vista roupa confortável, não use pomadas no local e siga a orientação do profissional de saúde sobre medicamentos.",
+    warning: "Febre alta, especialmente em menores de 3 meses, dificuldade para respirar, convulsão, sonolência excessiva ou reação alérgica intensa."
   },
   {
     key: "4-months",
     age: "Aos 4 meses",
     months: 4,
     vaccines: ["DTPa + Hib + VIP", "Pneumocócica (Pn20)", "Meningite B (MenB)"],
-    tip: "Reforço das vacinas dos 2 meses. A Meningocócica B pode causar mais febre. Reações comuns: dor na perna, febre, sonolência e irritabilidade. Dicas: amamente antes/depois da vacina, ofereça colo, vista roupa confortável, não use pomadas no local e siga a orientação do profissional de saúde sobre medicamentos. Procure atendimento se houver febre alta, especialmente em menores de 3 meses, dificuldade para respirar, convulsão, sonolência excessiva ou reação alérgica intensa."
+    info: "Hexavalente, Pneumocócica e Meningocócica B. Reforço das vacinas dos 2 meses.",
+    reactions: "Dor na perna, febre, sonolência e irritabilidade. A MenB pode causar mais febre. Reações semelhantes às doses anteriores podem acontecer.",
+    tips: "Amamente antes/depois da vacina, ofereça colo, vista roupa confortável, não use pomadas no local e siga a orientação do profissional de saúde sobre medicamentos.",
+    warning: "Febre alta, especialmente em menores de 3 meses, dificuldade para respirar, convulsão, sonolência excessiva ou reação alérgica intensa."
   },
   {
     key: "6-months",
     age: "Aos 6 meses",
     months: 6,
     vaccines: ["Hexavalente (DTPa + Hib + VIP + VHB)"],
-    tip: "Nova dose da Hexavalente. Reações leves como febre baixa e dor local podem acontecer. Dicas: amamente antes/depois da vacina, ofereça colo, vista roupa confortável, não use pomadas no local e siga a orientação do profissional de saúde sobre medicamentos. Procure atendimento se houver febre alta, especialmente em menores de 3 meses, dificuldade para respirar, convulsão, sonolência excessiva ou reação alérgica intensa."
+    info: "Nova dose da Hexavalente.",
+    reactions: "Reações leves como febre baixa e dor local.",
+    tips: "Amamente antes/depois da vacina, ofereça colo, vista roupa confortável, não use pomadas no local e siga a orientação do profissional de saúde sobre medicamentos.",
+    warning: "Febre alta, especialmente em menores de 3 meses, dificuldade para respirar, convulsão, sonolência excessiva ou reação alérgica intensa."
   },
   {
     key: "12-months",
     age: "Aos 12 meses",
     months: 12,
     vaccines: ["Pneumocócica (Pn20)", "Sarampo, Papeira e Rubéola (VASPR/Tríplice viral)", "Meningocócica ACWY"],
-    tip: "VASPR, Pneumocócica de reforço e Meningocócica conforme calendário. A VASPR pode causar febre e manchas entre 5 e 12 dias após a aplicação. Dicas: amamente antes/depois da vacina, ofereça colo, vista roupa confortável, não use pomadas no local e siga a orientação do profissional de saúde sobre medicamentos. Procure atendimento se houver febre alta, especialmente em menores de 3 meses, dificuldade para respirar, convulsão, sonolência excessiva ou reação alérgica intensa."
+    info: "VASPR (sarampo, papeira e rubéola), Pneumocócica de reforço, Meningocócica C e/ou B conforme calendário.",
+    reactions: "A VASPR pode causar febre e manchas entre 5 e 12 dias após a aplicação.",
+    tips: "Amamente antes/depois da vacina, ofereça colo, vista roupa confortável, não use pomadas no local e siga a orientação do profissional de saúde sobre medicamentos.",
+    warning: "Febre alta, especialmente em menores de 3 meses, dificuldade para respirar, convulsão, sonolência excessiva ou reação alérgica intensa."
   },
   {
     key: "5-years",
     age: "Aos 5 anos",
     months: 60,
     vaccines: ["Reforço da Hexavalente", "Reforço da VASPR"],
-    tip: "Reforços contra difteria, tétano, tosse convulsa, poliomielite e segunda dose da VASPR, conforme orientação local. Reações costumam ser leves e passageiras. Dicas: ofereça acolhimento, vista roupa confortável, não use pomadas no local e siga a orientação do profissional de saúde sobre medicamentos. Procure atendimento se houver febre alta, dificuldade para respirar, convulsão, sonolência excessiva ou reação alérgica intensa."
+    info: "Reforço da Hexavalente e reforço da VASPR. Também cobre reforços contra difteria, tétano, tosse convulsa, poliomielite e segunda dose da VASPR conforme calendário.",
+    reactions: "Reações leves e passageiras.",
+    tips: "Ofereça colo, conforto, roupa confortável, não use pomadas no local e siga a orientação do profissional de saúde sobre medicamentos.",
+    warning: "Febre alta, dificuldade para respirar, convulsão, sonolência excessiva ou reação alérgica intensa."
   },
   {
     key: "10-years",
     age: "Aos 10 anos",
     months: 120,
     vaccines: ["Papiloma Humano (HPV9) em duas doses", "Reforço do Tétano e Difteria (Td)"],
-    tip: "HPV9 e reforço Td, conforme o calendário aplicável. Pode haver dor local, mal-estar leve ou febre baixa. Dicas: manter hidratação, usar roupa confortável e seguir a orientação do profissional de saúde sobre medicamentos. Procure atendimento se houver febre alta, dificuldade para respirar, convulsão, sonolência excessiva ou reação alérgica intensa."
+    info: "HPV e reforço Td (tétano/difteria), conforme o calendário aplicável.",
+    reactions: "Pode haver dor local, mal-estar leve ou febre baixa.",
+    tips: "Mantenha hidratação, ofereça conforto, use roupa confortável e siga a orientação do profissional de saúde sobre medicamentos.",
+    warning: "Febre alta, dificuldade para respirar, convulsão, sonolência excessiva ou reação alérgica intensa."
   }
 ];
 
@@ -1075,9 +1096,9 @@ function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || location.protocol === "file:") return;
   let refreshing = false;
   navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (refreshing || sessionStorage.getItem("meu-bebe:sw-refreshed-v29")) return;
+    if (refreshing || sessionStorage.getItem("meu-bebe:sw-refreshed-v30")) return;
     refreshing = true;
-    sessionStorage.setItem("meu-bebe:sw-refreshed-v29", "1");
+    sessionStorage.setItem("meu-bebe:sw-refreshed-v30", "1");
     window.location.reload();
   });
   navigator.serviceWorker.register("service-worker.js").then((registration) => {
@@ -2363,10 +2384,18 @@ function renderVaccineSchedule(baby) {
         </div>
         <b>${esc(vaccineStatusLabel(item.status))}</b>
       </header>
-      <div class="pnv-tip">
-        <strong>Dica</strong>
-        <p>${esc(item.tip)}</p>
-      </div>
+      <details class="pnv-tip">
+        <summary>
+          <span>Dica e reações</span>
+          <b>Ver</b>
+        </summary>
+        <div class="pnv-tip-body">
+          <p><strong>Sobre:</strong> ${esc(item.info)}</p>
+          <p><strong>Reações:</strong> ${esc(item.reactions)}</p>
+          <p><strong>Dicas:</strong> ${esc(item.tips)}</p>
+          <p><strong>Quando procurar atendimento:</strong> ${esc(item.warning)}</p>
+        </div>
+      </details>
       <label>Data aplicada
         <input data-pnv-applied-date="${esc(item.key)}" type="date" value="${esc(item.appliedDate)}">
       </label>
