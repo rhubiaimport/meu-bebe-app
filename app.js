@@ -866,6 +866,10 @@ function todayRecords(records) {
   return records.filter((record) => new Date(record.date || record.createdAt).toDateString() === today);
 }
 
+function isToday(value) {
+  return value && new Date(value).toDateString() === new Date().toDateString();
+}
+
 function ageText(birthDate) {
   if (!birthDate) return "Nascimento não informado";
   const birth = new Date(`${birthDate}T00:00:00`);
@@ -1016,8 +1020,10 @@ function render() {
   $("#babyWeightHero").textContent = baby.weight || "--";
   $("#babyHeightHero").textContent = baby.height || "--";
   const growthSummary = getGrowthSummary(baby);
-  $("#babyWeightTrend").textContent = growthSummary.weightTrend;
-  $("#babyHeightTrend").textContent = growthSummary.heightTrend;
+  const weightTrend = $("#babyWeightTrend");
+  const heightTrend = $("#babyHeightTrend");
+  if (weightTrend) weightTrend.textContent = growthSummary.weightTrend;
+  if (heightTrend) heightTrend.textContent = growthSummary.heightTrend;
   $("#babyPhoto").src = baby.photo || "assets/baby-clouds.png";
   $("#alertsToggle").checked = Boolean(state.settings.visualAlerts);
   $("#nightModeToggle").checked = Boolean(state.settings.softNight);
@@ -1137,9 +1143,9 @@ function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || location.protocol === "file:") return;
   let refreshing = false;
   navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (refreshing || sessionStorage.getItem("meu-bebe:sw-refreshed-v33")) return;
+    if (refreshing || sessionStorage.getItem("meu-bebe:sw-refreshed-v34")) return;
     refreshing = true;
-    sessionStorage.setItem("meu-bebe:sw-refreshed-v33", "1");
+    sessionStorage.setItem("meu-bebe:sw-refreshed-v34", "1");
     window.location.reload();
   });
   navigator.serviceWorker.register("service-worker.js").then((registration) => {
@@ -1160,6 +1166,10 @@ function renderDashboard(baby) {
   const medicine = getMedicineSummary(records);
   const appointment = getAppointmentSummary(records);
   const growth = getGrowthSummary(baby);
+  const latestGrowth = growthRecords(baby)[0];
+  const feedTodayCount = records.filter((record) => record.type === "feed" && isToday(record.date || record.createdAt)).length;
+  const milkToday = records.filter((record) => record.type === "milk" && isToday(record.date || record.createdAt));
+  const milkTodayTotal = milkToday.reduce((sum, record) => sum + Number(record.amount || 0), 0);
   const pnvItems = pnvSchedule.map((item) => pnvState(item, baby));
   const nextVaccine = pnvItems
     .filter((item) => item.status !== "taken")
@@ -1183,144 +1193,91 @@ function renderDashboard(baby) {
       key: "medicine",
       title: "Próximo remédio",
       icon: "pill",
-      value: medicine.name,
-      meta: medicine.time === "--:--" ? "Nenhum remédio agendado" : `${medicine.time} · ${medicine.countdown}`,
+      value: medicine.time === "--:--" ? "Nenhum agendado" : medicine.time,
+      meta: medicine.time === "--:--" ? "Cadastre na aba Saúde" : `${medicine.name} · faltam ${medicine.countdown}`,
       tone: medicine.countdown === "Agora" ? "soon" : ""
     },
     {
       key: "appointment",
       title: "Próxima consulta",
       icon: "calendar",
-      value: appointment.doctor,
-      meta: appointment.date === "--" ? "Nenhuma consulta marcada" : `${appointment.date} · ${appointment.time}`,
+      value: appointment.date === "--/--/----" ? "Nenhuma" : appointment.date.slice(0, 5),
+      meta: appointment.date === "--/--/----" ? "Nenhuma consulta marcada" : `${appointment.time} · ${appointment.doctor}`,
       tone: ""
     },
     {
       key: "vaccine",
       title: "Vacina pendente",
       icon: "vaccine",
-      value: nextVaccine ? nextVaccine.vaccines.join(" + ") : "Tudo em dia",
+      value: lateVaccines ? `${lateVaccines} vacina${lateVaccines === 1 ? "" : "s"}` : nextVaccine ? nextVaccine.vaccines[0] : "Tudo em dia",
       meta: nextVaccine?.dueDate ? `Prevista para ${formatOnlyDate(nextVaccine.dueDate)}` : "Confira a carteirinha",
       tone: lateVaccines ? "soon" : ""
     }
   ];
 
-  const routineCards = [
-    {
-      key: "profile",
-      title: "Dados do bebê",
-      icon: "baby",
-      lines: [
-        ["Nome", baby.name],
-        ["Idade", ageText(baby.birthDate)],
-        ["Peso atual", `${baby.weight || "--"} kg · ${growth.weightStatus}`],
-        ["Diferença", growth.weightTrend],
-        ["Tamanho atual", `${baby.height || "--"} cm · ${growth.heightTrend}`]
-      ]
-    },
+  const miniCards = [
     {
       key: "feed",
       title: "Mamadas",
       icon: "bottle",
-      lines: [
-        ["Última", feed.lastTime],
-        ["Próxima", feed.nextTime],
-        ["Faltam", feed.countdown],
-        ["Já passou", feed.elapsed]
-      ]
+      value: feedTodayCount,
+      meta: "Hoje"
     },
     {
       key: "milk",
       title: "Leite materno",
       icon: "milk",
-      lines: [
-        ["Última retirada", milk.lastTime],
-        ["Quantidade", milk.amount],
-        ["Ambiente", milk.ambient],
-        ["Geladeira", milk.fridge],
-        ["Congelador", milk.freezer],
-        ["Tempo restante", milk.remaining]
-      ]
+      value: milkTodayTotal ? `${milkTodayTotal} ml` : milk.lastTime,
+      meta: milkTodayTotal ? "Hoje" : `Última ${milk.lastTime}`
     },
     {
       key: "poop",
-      title: "Cocô",
+      title: "Cocôs",
       icon: "diaper",
-      lines: [
-        ["Cocôs hoje", diaper.poopCount],
-        ["Último registro", diaper.lastPoop]
-      ]
+      value: diaper.poopCount,
+      meta: "Hoje"
     },
     {
       key: "pee",
-      title: "Xixi",
+      title: "Xixis",
       icon: "drop",
-      lines: [
-        ["Xixis hoje", diaper.peeCount],
-        ["Último registro", diaper.lastPee]
-      ]
-    },
-    {
-      key: "medicine",
-      title: "Remédios",
-      icon: "pill",
-      lines: [
-        ["Próximo remédio", medicine.name],
-        ["Horário", medicine.time],
-        ["Faltam", medicine.countdown]
-      ]
-    },
-    {
-      key: "appointment",
-      title: "Consultas",
-      icon: "calendar",
-      lines: [
-        ["Especialidade", appointment.doctor],
-        ["Data", appointment.date],
-        ["Horário", appointment.time]
-      ]
+      value: diaper.peeCount,
+      meta: "Hoje"
     }
   ];
 
   $("#dashboardCards").innerHTML = `
-    <section class="today-focus" aria-label="Resumo de hoje">
-      <div class="today-focus-copy">
-        <p class="eyebrow">Hoje</p>
-        <h2>O que precisa de atenção</h2>
-        <small>${esc(new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" }))}</small>
-      </div>
-      <div class="today-focus-grid">
+    <section class="attention-panel" aria-label="O que precisa de atenção">
+      <h2>O que precisa de atenção</h2>
+      <div class="attention-list">
         ${focusCards.map((card) => `
-          <article class="today-card ${esc(card.tone)}" data-home-card="${esc(card.key)}" tabindex="0" role="button" aria-label="Abrir ${esc(card.title)}">
-            <span class="app-icon app-icon-${esc(card.icon)}" aria-hidden="true"></span>
-            <div>
+          <article class="attention-row ${esc(card.tone)}" data-home-card="${esc(card.key)}" tabindex="0" role="button" aria-label="Abrir ${esc(card.title)}">
+            <span class="attention-icon app-icon app-icon-${esc(card.icon)}" aria-hidden="true"></span>
+            <div class="attention-main">
               <small>${esc(card.title)}</small>
               <strong>${esc(card.value)}</strong>
-              <em>${esc(card.meta)}</em>
             </div>
+            <em>${esc(card.meta)}</em>
+            <b aria-hidden="true">›</b>
           </article>
         `).join("")}
       </div>
     </section>
-    <section class="routine-grid" aria-label="Rotina completa">
-      ${routineCards.map((card) => `
-        <article class="home-card" data-home-card="${esc(card.key)}" tabindex="0" role="button" aria-label="Abrir ${esc(card.title)}">
-          <header>
-            <span class="app-icon app-icon-${esc(card.icon)}" aria-hidden="true"></span>
-            <h3>${esc(card.title)}</h3>
-          </header>
-          <div class="home-card-lines">
-            ${card.lines.map(([label, value]) => `
-              <div>
-                <small>${esc(label)}</small>
-                <strong>${esc(value)}</strong>
-              </div>
-            `).join("")}
+    <section class="mini-stats-grid" aria-label="Resumo rápido">
+      ${miniCards.map((card) => `
+        <article class="mini-stat-card" data-home-card="${esc(card.key)}" tabindex="0" role="button" aria-label="Abrir ${esc(card.title)}">
+          <span class="app-icon app-icon-${esc(card.icon)}" aria-hidden="true"></span>
+          <div>
+            <small>${esc(card.title)}</small>
+            <strong>${esc(card.value)}</strong>
+            <em>${esc(card.meta)}</em>
           </div>
         </article>
       `).join("")}
     </section>
   `;
+  const headMetric = $("#babyHeadHero");
+  if (headMetric) headMetric.textContent = latestGrowth?.head || "--";
 }
 
 function getGrowthSummary(baby) {
