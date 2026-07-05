@@ -3893,3 +3893,223 @@ body.soft-night .elimination-picker button {
     grid-template-columns: 1fr;
   }
 }
+
+/* v36 - telas internas com a mesma linguagem visual da tela inicial */
+.view:not(#view-home) .section-heading,
+.profile-view .section-heading {
+  position: static;
+  top: auto;
+  display: block;
+  margin: 0 0 12px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.view:not(#view-home) .section-heading h2,
+.profile-view .section-heading h2 {
+  color: #0b6fe8;
+  font-size: clamp(1.34rem, 5.2vw, 1.62rem);
+  line-height: 1.14;
+  letter-spacing: 0;
+}
+
+.view:not(#view-home) .section-heading p {
+  display: block;
+  margin-top: 3px;
+  color: #5d6985;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.profile-view .section-heading p {
+  display: none;
+}
+
+.subtab-row {
+  position: static;
+  top: auto;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.subtab-row button {
+  min-height: 46px;
+  border: 1px solid rgba(195, 215, 234, 0.82);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.94);
+  color: #101a38;
+  box-shadow: 0 8px 18px rgba(51, 92, 125, 0.08);
+}
+
+.subtab-row button.active {
+  border-color: rgba(11, 111, 232, 0.28);
+  color: #0b6fe8;
+  background: #edf6ff;
+  box-shadow: 0 8px 18px rgba(51, 92, 125, 0.08);
+}
+
+.panel,
+.feed-summary-card,
+.feed-stat-card,
+.milk-validity-card,
+.medicine-control-card,
+.pnv-card,
+.feed-history-item,
+.profile-info-card,
+.profile-auth-panel,
+.growth-table-wrap,
+.calendar-detail,
+.timeline-item {
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 8px 18px rgba(51, 92, 125, 0.08);
+}
+
+.panel,
+.feed-summary-card,
+.feed-stat-card,
+.milk-validity-card {
+  padding: 12px;
+}
+
+.health-main-grid,
+.feed-layout,
+.elimination-main-grid,
+.profile-admin-grid,
+.feed-summary-grid,
+.feed-stats-grid,
+.milk-summary-grid,
+.milk-stats-grid,
+.elimination-summary,
+.health-summary,
+.profile-card-grid {
+  gap: 10px;
+}
+
+.feed-summary-card,
+.feed-stat-card,
+.milk-validity-card {
+  display: grid;
+  align-content: center;
+  min-height: 92px;
+}
+
+.feed-summary-card small,
+.feed-stat-card small,
+.milk-validity-card p {
+  color: #101a38;
+  font-weight: 820;
+}
+
+.feed-summary-card strong,
+.feed-stat-card strong,
+.milk-validity-card strong {
+  color: #0b6fe8;
+  font-size: clamp(1.12rem, 4.4vw, 1.42rem);
+}
+
+.feed-register-panel h3,
+.panel h3,
+.medicine-card-list > h3,
+.feed-history-panel h3,
+.elimination-calendar-panel h3,
+.elimination-chart-panel h3 {
+  color: #101a38;
+  font-size: 1rem;
+  font-weight: 850;
+}
+
+.feed-now-button {
+  min-height: 48px;
+  border-radius: 15px;
+}
+
+.feed-quick-choice button,
+.feed-type-picker button,
+.button-row button,
+.filter-row button,
+.pnv-actions button,
+.elimination-picker button {
+  border-radius: 15px;
+}
+
+.feed-history-item {
+  min-height: 70px;
+}
+
+.medicine-card-list {
+  gap: 10px;
+}
+
+.medicine-control-card > header {
+  background: rgba(237, 246, 255, 0.95);
+}
+
+.medicine-next-dose,
+.medicine-history-detail,
+.milk-relation-grid div,
+.pnv-card details {
+  border-radius: 15px;
+  background: #f7fbff;
+}
+
+.pnv-panel .section-row {
+  margin-bottom: 4px;
+}
+
+.pnv-card {
+  gap: 10px;
+}
+
+.pnv-card header strong {
+  color: #101a38;
+  font-size: 1rem;
+}
+
+.pnv-card b {
+  background: #edf6ff;
+}
+
+.profile-hero-card {
+  padding-top: 0;
+}
+
+.profile-admin-grid .panel {
+  border-radius: 15px;
+}
+
+body.soft-night .view:not(#view-home) .section-heading,
+body.soft-night .profile-view .section-heading,
+body.soft-night .subtab-row {
+  background: transparent;
+}
+
+body.soft-night .subtab-row button,
+body.soft-night .panel,
+body.soft-night .feed-summary-card,
+body.soft-night .feed-stat-card,
+body.soft-night .milk-validity-card,
+body.soft-night .medicine-control-card,
+body.soft-night .pnv-card,
+body.soft-night .feed-history-item,
+body.soft-night .growth-table-wrap,
+body.soft-night .calendar-detail,
+body.soft-night .timeline-item {
+  border-color: rgba(118, 141, 171, 0.34);
+  background: rgba(22, 31, 47, 0.94);
+}
+
+body.soft-night .subtab-row button.active {
+  color: #8dcdf0;
+  background: rgba(36, 77, 103, 0.42);
+}
