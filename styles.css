@@ -521,6 +521,22 @@ body.soft-night textarea {
   --icon-mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 2s7 7.3 7 13a7 7 0 0 1-14 0c0-5.7 7-13 7-13Zm0 18a5 5 0 0 0 5-5c0-3.2-3.1-7.5-5-9.8C10.1 7.5 7 11.8 7 15a5 5 0 0 0 5 5Z'/%3E%3C/svg%3E");
 }
 
+.app-icon-home {
+  --icon-mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 10.6 12 3l9 7.6V20a2 2 0 0 1-2 2h-4.5v-6h-5v6H5a2 2 0 0 1-2-2v-9.4Zm2 1V20h2.5v-6h9v6H19v-8.4l-7-5.9-7 5.9Z'/%3E%3C/svg%3E");
+}
+
+.app-icon-health {
+  --icon-mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 3a7 7 0 0 1 6.8 8.6h1.7a1 1 0 0 1 .8 1.6l-3.2 4.1a3 3 0 0 1-2.4 1.2h-2.3l-.7 1.8a1 1 0 0 1-1.9 0L8.9 15l-.7 1.2a1 1 0 0 1-.9.5H3.5a1 1 0 1 1 0-2h3.2l1.6-2.8a1 1 0 0 1 1.8.2l1.7 5.1 1.3-3.4a1 1 0 0 1 .9-.6h1.7a5 5 0 1 0-8.5-3.6 1 1 0 1 1-2 0A7 7 0 0 1 12 3Zm4 12.2h-.9l-.5 1.3h1.1a1 1 0 0 0 .8-.4l1.1-1.4h-.6a1 1 0 0 1-1 .5Z'/%3E%3C/svg%3E");
+}
+
+.app-icon-profile {
+  --icon-mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 3a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm0 10c4.4 0 8 2.3 8 5v1H4v-1c0-2.7 3.6-5 8-5Zm0 2c-2.7 0-4.9.9-5.7 2h11.4c-.8-1.1-3-2-5.7-2Z'/%3E%3C/svg%3E");
+}
+
+.app-icon-settings {
+  --icon-mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10.6 2h2.8l.5 2.2c.5.2.9.3 1.3.6l2-1.2 2 2-1.2 2c.2.4.4.9.6 1.3l2.2.5v2.8l-2.2.5c-.2.5-.3.9-.6 1.3l1.2 2-2 2-2-1.2c-.4.2-.9.4-1.3.6l-.5 2.2h-2.8l-.5-2.2c-.5-.2-.9-.3-1.3-.6l-2 1.2-2-2 1.2-2c-.2-.4-.4-.9-.6-1.3l-2.2-.5V9.4l2.2-.5c.2-.5.3-.9.6-1.3l-1.2-2 2-2 2 1.2c.4-.2.9-.4 1.3-.6L10.6 2Zm.8 2-.4 1.8-.6.2c-.6.2-1.1.4-1.6.7l-.6.4-1.6-1-1 1 1 1.6-.4.6c-.3.5-.6 1-.7 1.6l-.2.6-1.8.4v1.4l1.8.4.2.6c.2.6.4 1.1.7 1.6l.4.6-1 1.6 1 1 1.6-1 .6.4c.5.3 1 .6 1.6.7l.6.2.4 1.8h1.4l.4-1.8.6-.2c.6-.2 1.1-.4 1.6-.7l.6-.4 1.6 1 1-1-1-1.6.4-.6c.3-.5.6-1 .7-1.6l.2-.6 1.8-.4v-1.4l-1.8-.4-.2-.6c-.2-.6-.4-1.1-.7-1.6l-.4-.6 1-1.6-1-1-1.6 1-.6-.4c-.5-.3-1-.6-1.6-.7l-.6-.2-.4-1.8h-1.4ZM12 9a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm0 2a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z'/%3E%3C/svg%3E");
+}
+
 .home-dashboard {
   display: grid;
   gap: 12px;
@@ -4143,5 +4159,128 @@ textarea::placeholder {
   select,
   textarea {
     font-size: 16px !important;
+  }
+}
+
+/* v38 - ícones padronizados, perfil organizado e feedback de salvamento */
+.tabbar button .app-icon {
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  margin: 0 auto 3px;
+  border-radius: 10px;
+  color: currentColor;
+  background: transparent;
+  box-shadow: none;
+}
+
+.tabbar button .app-icon::before {
+  width: 22px;
+  height: 22px;
+}
+
+.tabbar button.active .app-icon {
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.profile-group-title {
+  margin: 18px 2px 10px;
+  color: #101a38;
+  font-size: 1.03rem;
+  line-height: 1.25;
+}
+
+.profile-settings-title {
+  margin-top: 22px;
+}
+
+.profile-baby-grid {
+  grid-template-columns: 1fr;
+}
+
+.profile-baby-grid .profile-form {
+  display: grid;
+  gap: 10px;
+}
+
+.profile-settings-grid {
+  margin-top: 10px;
+}
+
+.profile-info-card::before {
+  content: "";
+  color: #0b6fe8;
+  -webkit-mask: var(--profile-icon) center / 23px 23px no-repeat;
+  mask: var(--profile-icon) center / 23px 23px no-repeat;
+}
+
+.profile-info-card:nth-child(n)::before {
+  content: "" !important;
+}
+
+.profile-info-card:nth-child(1)::before { --profile-icon: var(--icon-profile-info, url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 3a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 12c4.4 0 8 2.3 8 5v1H4v-1c0-2.7 3.6-5 8-5Z'/%3E%3C/svg%3E")); }
+.profile-info-card:nth-child(2)::before { --profile-icon: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 2h2v3h4a2 2 0 0 1 2 2v3a6 6 0 1 1-14 0V7a2 2 0 0 1 2-2h4V2Zm-4 7h10V7H7v2Zm.1 2a4 4 0 1 0 9.8 0H7.1ZM12 13a1 1 0 0 1 1 1v2h-2v-2a1 1 0 0 1 1-1Z'/%3E%3C/svg%3E"); }
+.profile-info-card:nth-child(3)::before { --profile-icon: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5 3h14v18H5V3Zm2 2v14h10V5H7Zm2 2h6v2H9V7Zm0 4h4v2H9v-2Zm0 4h6v2H9v-2Z'/%3E%3C/svg%3E"); }
+.profile-info-card:nth-child(4)::before { --profile-icon: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5 5h14v4H5V5Zm0 6h14v8H5v-8Zm2 2v4h3v-4H7Zm5 0v4h5v-4h-5Z'/%3E%3C/svg%3E"); }
+.profile-info-card:nth-child(5)::before { --profile-icon: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3Zm0 2.2 6 2.3V11c0 3.8-2.4 7.2-6 8.8-3.6-1.6-6-5-6-8.8V6.5l6-2.3Zm-1 4.8h2v3h3v2h-3v3h-2v-3H8v-2h3V9Z'/%3E%3C/svg%3E"); color: #ef4565; }
+.profile-info-card:nth-child(6)::before { --profile-icon: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6.6 2h4l1 5-2.4 1.2a12 12 0 0 0 6.6 6.6l1.2-2.4 5 1v4A4.6 4.6 0 0 1 17.4 22 15.4 15.4 0 0 1 2 6.6 4.6 4.6 0 0 1 6.6 2Zm2.3 2H6.6A2.6 2.6 0 0 0 4 6.6 13.4 13.4 0 0 0 17.4 20a2.6 2.6 0 0 0 2.6-2.6v-2.3l-1.8-.4-1.4 2.7-.8-.2a14 14 0 0 1-9.2-9.2l-.2-.8 2.7-1.4L8.9 4Z'/%3E%3C/svg%3E"); }
+.profile-info-card:nth-child(7)::before { --profile-icon: var(--icon-settings, url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 2h4l.6 2.2c.4.1.7.3 1 .4l2-1.1 2.8 2.8-1.1 2c.2.3.3.7.4 1L22 10v4l-2.2.6c-.1.4-.3.7-.4 1l1.1 2-2.8 2.8-2-1.1c-.3.2-.7.3-1 .4L14 22h-4l-.6-2.2c-.4-.1-.7-.3-1-.4l-2 1.1-2.8-2.8 1.1-2c-.2-.3-.3-.7-.4-1L2 14v-4l2.2-.6c.1-.4.3-.7.4-1l-1.1-2 2.8-2.8 2 1.1c.3-.2.7-.3 1-.4L10 2Zm2 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z'/%3E%3C/svg%3E")); }
+.profile-info-card:nth-child(8)::before { --profile-icon: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 18a5 5 0 0 1 1-9.9A6 6 0 0 1 19.7 10 4 4 0 0 1 19 18H7Zm0-2h12a2 2 0 0 0 .3-4l-1.2-.2-.2-1.2A4 4 0 0 0 10 9.4l-.3.9-.9-.1A3 3 0 0 0 7 16Zm4-5h2v3h3v2h-3v3h-2v-3H8v-2h3v-3Z'/%3E%3C/svg%3E"); }
+.profile-info-card:nth-child(9)::before { --profile-icon: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 10h2v8h-2v-8Zm0-4h2v2h-2V6Zm1-4a10 10 0 1 1 0 20 10 10 0 0 1 0-20Zm0 2a8 8 0 1 0 0 16 8 8 0 0 0 0-16Z'/%3E%3C/svg%3E"); }
+
+.pwa-install-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.pwa-install-panel p {
+  margin: 4px 0 0;
+}
+
+.pwa-install-panel button {
+  white-space: nowrap;
+}
+
+.save-indicator {
+  position: fixed;
+  left: 50%;
+  bottom: calc(78px + var(--safe-bottom));
+  z-index: 35;
+  min-height: 34px;
+  padding: 8px 14px;
+  border: 1px solid rgba(195, 215, 234, 0.88);
+  border-radius: 999px;
+  color: #0b6fe8;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 10px 24px rgba(51, 92, 125, 0.12);
+  font-size: 0.82rem;
+  font-weight: 850;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 10px);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.save-indicator.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+body.soft-night .profile-group-title {
+  color: #f5f8ff;
+}
+
+body.soft-night .save-indicator,
+body.soft-night .pwa-install-panel {
+  border-color: rgba(118, 141, 171, 0.34);
+  background: rgba(22, 31, 47, 0.96);
+}
+
+@media (max-width: 430px) {
+  .pwa-install-panel {
+    grid-template-columns: 1fr;
   }
 }

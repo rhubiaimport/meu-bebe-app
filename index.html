@@ -9,7 +9,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="assets/baby-clouds.png" type="image/png">
     <link rel="apple-touch-icon" href="assets/baby-clouds.png">
-    <link rel="stylesheet" href="style.css?v=37">
+    <link rel="stylesheet" href="style.css?v=38">
     <script src="firebase-config.js"></script>
   </head>
   <body>
@@ -945,6 +945,7 @@
             </div>
           </section>
 
+          <h3 class="profile-group-title">Sobre o bebê</h3>
           <section class="profile-card-grid" aria-label="Resumo do perfil">
             <article class="profile-info-card">
               <small>Informações do bebê</small>
@@ -993,19 +994,7 @@
             </article>
           </section>
 
-          <section class="auth-panel profile-auth-panel" id="authPanel" aria-label="Conta Google">
-            <div>
-              <p class="eyebrow">Conta protegida</p>
-              <strong id="authTitle">Entrar para sincronizar</strong>
-              <small id="authStatus">Seus dados continuam salvos neste dispositivo até o login ser configurado.</small>
-            </div>
-            <div class="auth-actions">
-              <button type="button" id="googleLoginButton">Entrar com Google</button>
-              <button type="button" id="googleLogoutButton" class="hidden">Sair da conta</button>
-            </div>
-          </section>
-
-          <section class="profile-admin-grid">
+          <section class="profile-admin-grid profile-baby-grid">
             <form class="panel profile-form" id="profileForm">
               <h3>Dados do bebê</h3>
               <label>👶🏽 Nome
@@ -1036,21 +1025,6 @@
               </label>
               <button type="submit">Atualizar perfil</button>
             </form>
-
-            <article class="panel">
-              <h3>Perfis de bebês</h3>
-              <div id="babyProfiles" class="profile-list"></div>
-              <button type="button" id="addBaby">👶🏽 Adicionar bebê</button>
-            </article>
-
-            <article class="panel">
-              <h3>Modo noturno</h3>
-              <p>Deixe o app mais confortável para usar à noite.</p>
-              <label class="switch">Ativar modo noturno
-                <input type="checkbox" id="nightModeToggle">
-                <span></span>
-              </label>
-            </article>
           </section>
 
           <section class="panel hidden" id="welcomePanel">
@@ -1145,6 +1119,44 @@
             </div>
           </form>
 
+          <h3 class="profile-group-title profile-settings-title">Configurações</h3>
+          <section class="auth-panel profile-auth-panel" id="authPanel" aria-label="Conta Google">
+            <div>
+              <p class="eyebrow">Conta protegida</p>
+              <strong id="authTitle">Entrar para sincronizar</strong>
+              <small id="authStatus">Seus dados continuam salvos neste dispositivo até o login ser configurado.</small>
+            </div>
+            <div class="auth-actions">
+              <button type="button" id="googleLoginButton">Entrar com Google</button>
+              <button type="button" id="googleLogoutButton" class="hidden">Sair da conta</button>
+            </div>
+          </section>
+
+          <section class="profile-admin-grid profile-settings-grid">
+            <article class="panel">
+              <h3>Perfis de bebês</h3>
+              <div id="babyProfiles" class="profile-list"></div>
+              <button type="button" id="addBaby">Adicionar bebê</button>
+            </article>
+
+            <article class="panel">
+              <h3>Modo noturno</h3>
+              <p>Deixe o app mais confortável para usar à noite.</p>
+              <label class="switch">Ativar modo noturno
+                <input type="checkbox" id="nightModeToggle">
+                <span></span>
+              </label>
+            </article>
+          </section>
+
+          <section class="panel pwa-install-panel" id="pwaInstallPanel">
+            <div>
+              <h3>Instalar aplicativo</h3>
+              <p id="pwaInstallText">Instale o Meu Bebê na tela inicial para abrir mais rápido e usar como app.</p>
+            </div>
+            <button type="button" id="installPwaButton">Instalar app</button>
+          </section>
+
           <section class="panel backup-panel">
             <h3>💾 Backup</h3>
             <p>O backup guarda perfil, rotina, histórico, crescimento e configurações offline.</p>
@@ -1198,11 +1210,11 @@
       </main>
 
       <nav class="tabbar" aria-label="Navegação principal">
-        <button class="active" type="button" data-tab="home"><span>⌂</span>Início</button>
-        <button type="button" data-tab="feed"><span>🍼</span>Alimentação</button>
-        <button type="button" data-tab="poop"><span>☁️</span>Fraldas</button>
-        <button type="button" data-tab="medicine"><span>🏥</span>Saúde</button>
-        <button type="button" data-tab="profile"><span>👶🏽</span>Perfil</button>
+        <button class="active" type="button" data-tab="home"><span class="app-icon app-icon-home" aria-hidden="true"></span>Início</button>
+        <button type="button" data-tab="feed"><span class="app-icon app-icon-bottle" aria-hidden="true"></span>Alimentação</button>
+        <button type="button" data-tab="poop"><span class="app-icon app-icon-diaper" aria-hidden="true"></span>Fraldas</button>
+        <button type="button" data-tab="medicine"><span class="app-icon app-icon-health" aria-hidden="true"></span>Saúde</button>
+        <button type="button" data-tab="profile"><span class="app-icon app-icon-profile" aria-hidden="true"></span>Perfil</button>
       </nav>
     </div>
 
@@ -1213,7 +1225,8 @@
       <option value="Com bolinhas"></option>
       <option value="Outra observação"></option>
     </datalist>
+    <div class="save-indicator" id="saveIndicator" role="status" aria-live="polite">Salvo automaticamente</div>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="script.js?v=37"></script>
+    <script src="script.js?v=38"></script>
   </body>
 </html>

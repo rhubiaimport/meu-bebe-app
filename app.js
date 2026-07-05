@@ -432,6 +432,9 @@ function dateOnly(value) {
 
 let renderQueuedWhileEditing = false;
 let renderFlushTimer = 0;
+let saveIndicatorTimer = 0;
+let deferredPwaPrompt = null;
+let saveFeedbackReady = false;
 
 function isEditingField() {
   const element = document.activeElement;
@@ -464,8 +467,18 @@ function saveState() {
   const previousRaw = localStorage.getItem(activeStorageKey);
   if (previousRaw && previousRaw !== JSON.stringify(state)) preserveLocalBackup("antes-de-salvar", previousRaw);
   localStorage.setItem(activeStorageKey, JSON.stringify(state));
+  if (saveFeedbackReady) showSaveIndicator();
   scheduleCloudSave();
   requestRender();
+}
+
+function showSaveIndicator(message = "Salvo automaticamente") {
+  const indicator = $("#saveIndicator");
+  if (!indicator) return;
+  indicator.textContent = message;
+  indicator.classList.add("show");
+  window.clearTimeout(saveIndicatorTimer);
+  saveIndicatorTimer = window.setTimeout(() => indicator.classList.remove("show"), 1600);
 }
 
 function exportStateFile(filenamePrefix = "meu-bebe-backup") {
@@ -1143,9 +1156,9 @@ function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || location.protocol === "file:") return;
   let refreshing = false;
   navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (refreshing || sessionStorage.getItem("meu-bebe:sw-refreshed-v37")) return;
+    if (refreshing || sessionStorage.getItem("meu-bebe:sw-refreshed-v38")) return;
     refreshing = true;
-    sessionStorage.setItem("meu-bebe:sw-refreshed-v37", "1");
+    sessionStorage.setItem("meu-bebe:sw-refreshed-v38", "1");
     window.location.reload();
   });
   navigator.serviceWorker.register("service-worker.js").then((registration) => {
@@ -3759,15 +3772,66 @@ function setupMobileKeyboardZoomFix() {
   });
 }
 
+function setupPwaInstallExperience() {
+  const panel = $("#pwaInstallPanel");
+  const button = $("#installPwaButton");
+  const text = $("#pwaInstallText");
+  const isStandalone = window.matchMedia?.("(display-mode: standalone)")?.matches || navigator.standalone;
+  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+  const updatePanel = () => {
+    if (!panel || !button || !text) return;
+    if (isStandalone) {
+      text.textContent = "O Meu Bebê já está instalado na tela inicial.";
+      button.classList.add("hidden");
+      return;
+    }
+    if (deferredPwaPrompt) {
+      text.textContent = "Instale o Meu Bebê para abrir rápido, usar em tela cheia e manter a experiência de app.";
+      button.classList.remove("hidden");
+      return;
+    }
+    text.textContent = isIos
+      ? "No iPhone, toque em Compartilhar e escolha “Adicionar à Tela de Início”."
+      : "Quando o navegador permitir, o botão de instalação aparecerá aqui.";
+    button.classList.add("hidden");
+  };
+
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    deferredPwaPrompt = event;
+    updatePanel();
+  });
+
+  button?.addEventListener("click", async () => {
+    if (!deferredPwaPrompt) return;
+    deferredPwaPrompt.prompt();
+    const choice = await deferredPwaPrompt.userChoice.catch(() => null);
+    deferredPwaPrompt = null;
+    updatePanel();
+    toast(choice?.outcome === "accepted" ? "App instalado com sucesso." : "Instalação cancelada.");
+  });
+
+  window.addEventListener("appinstalled", () => {
+    deferredPwaPrompt = null;
+    updatePanel();
+    toast("Meu Bebê instalado na tela inicial.");
+  });
+
+  updatePanel();
+}
+
 function boot() {
   document.body.dataset.currentView = "home";
   setupMobileKeyboardZoomFix();
   setupForms();
   setupEvents();
+  setupPwaInstallExperience();
   document.addEventListener("focusout", flushQueuedRender);
   document.addEventListener("change", flushQueuedRender);
   requestPersistentStorage();
   saveState();
+  saveFeedbackReady = true;
   initFirebaseAuth();
   if (location.hash) {
     window.setTimeout(() => openHomeTarget(location.hash.replace("#", "")), 250);
