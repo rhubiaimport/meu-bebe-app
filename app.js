@@ -430,13 +430,42 @@ function dateOnly(value) {
   return date.toISOString().slice(0, 10);
 }
 
+let renderQueuedWhileEditing = false;
+let renderFlushTimer = 0;
+
+function isEditingField() {
+  const element = document.activeElement;
+  if (!element || element === document.body) return false;
+  if (!element.matches?.("input, textarea, select, [contenteditable='true']")) return false;
+  if (element.matches("input[type='button'], input[type='submit'], input[type='reset'], input[type='checkbox'], input[type='radio'], input[type='file']")) return false;
+  return true;
+}
+
+function requestRender() {
+  if (isEditingField()) {
+    renderQueuedWhileEditing = true;
+    return;
+  }
+  renderQueuedWhileEditing = false;
+  render();
+}
+
+function flushQueuedRender() {
+  window.clearTimeout(renderFlushTimer);
+  renderFlushTimer = window.setTimeout(() => {
+    if (!renderQueuedWhileEditing || isEditingField()) return;
+    renderQueuedWhileEditing = false;
+    requestRender();
+  }, 120);
+}
+
 function saveState() {
   state = repairState(state);
   const previousRaw = localStorage.getItem(activeStorageKey);
   if (previousRaw && previousRaw !== JSON.stringify(state)) preserveLocalBackup("antes-de-salvar", previousRaw);
   localStorage.setItem(activeStorageKey, JSON.stringify(state));
   scheduleCloudSave();
-  render();
+  requestRender();
 }
 
 function exportStateFile(filenamePrefix = "meu-bebe-backup") {
@@ -632,7 +661,7 @@ function startCloudListener() {
     localStorage.setItem(activeStorageKey, JSON.stringify(state));
     lastCloudSavedJson = remoteJson;
     applyingRemoteState = false;
-    render();
+    requestRender();
     toast("Dados sincronizados da conta Google");
   }, () => {
     toast("Sincronização em tempo real pausada. Dados locais continuam salvos.");
@@ -656,7 +685,7 @@ async function handleAuthStateChanged(user) {
     activeStorageKey = STORAGE_KEY;
     state = loadState();
     lastCloudSavedJson = "";
-    render();
+    requestRender();
     renderAuthPanel();
     return;
   }
@@ -684,7 +713,7 @@ async function handleAuthStateChanged(user) {
       cloudSyncReady = true;
       await saveCloudStateNow();
       startCloudListener();
-      render();
+      requestRender();
       toast("Conta Google iniciada sem importar dados locais antigos.");
     } else if (localHasData && !alreadyDecidedImport && (!accountHasData || !sameData)) {
       const importLocal = await askConfirm("Deseja importar seus dados locais para sua conta Google?");
@@ -704,7 +733,7 @@ async function handleAuthStateChanged(user) {
         cloudSyncReady = true;
         lastCloudSavedJson = stateJson(state);
         startCloudListener();
-        render();
+        requestRender();
         toast("Conta Google carregada sem apagar o backup local");
       } else {
         applyingRemoteState = true;
@@ -714,7 +743,7 @@ async function handleAuthStateChanged(user) {
         cloudSyncReady = true;
         await saveCloudStateNow();
         startCloudListener();
-        render();
+        requestRender();
         toast("Conta Google iniciada. Seus dados antigos ficaram preservados em backup local.");
       }
     } else if (accountHasData) {
@@ -726,7 +755,7 @@ async function handleAuthStateChanged(user) {
       lastCloudSavedJson = cloudState ? stateJson(state) : "";
       if (!cloudState) await saveCloudStateNow();
       startCloudListener();
-      render();
+      requestRender();
       toast("Dados da conta Google carregados");
     } else {
       cloudSyncReady = true;
@@ -1108,9 +1137,9 @@ function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || location.protocol === "file:") return;
   let refreshing = false;
   navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (refreshing || sessionStorage.getItem("meu-bebe:sw-refreshed-v31")) return;
+    if (refreshing || sessionStorage.getItem("meu-bebe:sw-refreshed-v32")) return;
     refreshing = true;
-    sessionStorage.setItem("meu-bebe:sw-refreshed-v31", "1");
+    sessionStorage.setItem("meu-bebe:sw-refreshed-v32", "1");
     window.location.reload();
   });
   navigator.serviceWorker.register("service-worker.js").then((registration) => {
@@ -3535,7 +3564,7 @@ function setupEvents() {
 
   $("#cancelGrowthEdit").addEventListener("click", closeGrowthEdit);
 
-  $("#historyFilter").addEventListener("change", render);
+  $("#historyFilter").addEventListener("change", requestRender);
 
   $("#clearOld").addEventListener("click", () => {
     const baby = activeBaby();
@@ -3732,6 +3761,8 @@ function boot() {
   document.body.dataset.currentView = "home";
   setupForms();
   setupEvents();
+  document.addEventListener("focusout", flushQueuedRender);
+  document.addEventListener("change", flushQueuedRender);
   requestPersistentStorage();
   saveState();
   initFirebaseAuth();
@@ -3743,7 +3774,7 @@ function boot() {
     if (target) openHomeTarget(target);
   });
   window.setTimeout(() => promptDueMedicineDose().catch(() => {}), 2200);
-  window.setInterval(render, 60000);
+  window.setInterval(requestRender, 60000);
   window.setTimeout(() => $("#splash").classList.add("hide"), 1450);
 
   registerServiceWorker();
