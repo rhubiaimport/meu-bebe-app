@@ -68,43 +68,50 @@ const pnvSchedule = [
     key: "birth",
     age: "À nascença",
     months: 0,
-    vaccines: ["Hepatite B (VHB)", "Tuberculose (BCG)"]
+    vaccines: ["Hepatite B (VHB)", "Tuberculose (BCG)"],
+    tip: "BCG, quando indicada, protege contra formas graves de tuberculose. Bolinha, pequena ferida e cicatriz são esperadas. Hepatite B pode causar dor local, irritabilidade e febre baixa em situações indicadas. Dicas: amamente antes/depois da vacina, ofereça colo, vista roupa confortável, não use pomadas no local e siga a orientação do profissional de saúde sobre medicamentos. Procure atendimento se houver febre alta, especialmente em menores de 3 meses, dificuldade para respirar, convulsão, sonolência excessiva ou reação alérgica intensa."
   },
   {
     key: "2-months",
     age: "Aos 2 meses",
     months: 2,
-    vaccines: ["Hexavalente (DTPa + Hib + VIP + VHB)", "Pneumocócica (Pn20)"]
+    vaccines: ["Hexavalente (DTPa + Hib + VIP + VHB)", "Pneumocócica (Pn20)"],
+    tip: "Hexavalente e Pneumocócica podem causar dor na perna, febre, sonolência e irritabilidade. Dicas: amamente antes/depois da vacina, ofereça colo, vista roupa confortável, não use pomadas no local e siga a orientação do profissional de saúde sobre medicamentos. Procure atendimento se houver febre alta, especialmente em menores de 3 meses, dificuldade para respirar, convulsão, sonolência excessiva ou reação alérgica intensa."
   },
   {
     key: "4-months",
     age: "Aos 4 meses",
     months: 4,
-    vaccines: ["DTPa + Hib + VIP", "Pneumocócica (Pn20)", "Meningite B (MenB)"]
+    vaccines: ["DTPa + Hib + VIP", "Pneumocócica (Pn20)", "Meningite B (MenB)"],
+    tip: "Reforço das vacinas dos 2 meses. A Meningocócica B pode causar mais febre. Reações comuns: dor na perna, febre, sonolência e irritabilidade. Dicas: amamente antes/depois da vacina, ofereça colo, vista roupa confortável, não use pomadas no local e siga a orientação do profissional de saúde sobre medicamentos. Procure atendimento se houver febre alta, especialmente em menores de 3 meses, dificuldade para respirar, convulsão, sonolência excessiva ou reação alérgica intensa."
   },
   {
     key: "6-months",
     age: "Aos 6 meses",
     months: 6,
-    vaccines: ["Hexavalente (DTPa + Hib + VIP + VHB)"]
+    vaccines: ["Hexavalente (DTPa + Hib + VIP + VHB)"],
+    tip: "Nova dose da Hexavalente. Reações leves como febre baixa e dor local podem acontecer. Dicas: amamente antes/depois da vacina, ofereça colo, vista roupa confortável, não use pomadas no local e siga a orientação do profissional de saúde sobre medicamentos. Procure atendimento se houver febre alta, especialmente em menores de 3 meses, dificuldade para respirar, convulsão, sonolência excessiva ou reação alérgica intensa."
   },
   {
     key: "12-months",
     age: "Aos 12 meses",
     months: 12,
-    vaccines: ["Pneumocócica (Pn20)", "Sarampo, Papeira e Rubéola (VASPR/Tríplice viral)", "Meningocócica ACWY"]
+    vaccines: ["Pneumocócica (Pn20)", "Sarampo, Papeira e Rubéola (VASPR/Tríplice viral)", "Meningocócica ACWY"],
+    tip: "VASPR, Pneumocócica de reforço e Meningocócica conforme calendário. A VASPR pode causar febre e manchas entre 5 e 12 dias após a aplicação. Dicas: amamente antes/depois da vacina, ofereça colo, vista roupa confortável, não use pomadas no local e siga a orientação do profissional de saúde sobre medicamentos. Procure atendimento se houver febre alta, especialmente em menores de 3 meses, dificuldade para respirar, convulsão, sonolência excessiva ou reação alérgica intensa."
   },
   {
     key: "5-years",
     age: "Aos 5 anos",
     months: 60,
-    vaccines: ["Reforço da Hexavalente", "Reforço da VASPR"]
+    vaccines: ["Reforço da Hexavalente", "Reforço da VASPR"],
+    tip: "Reforços contra difteria, tétano, tosse convulsa, poliomielite e segunda dose da VASPR, conforme orientação local. Reações costumam ser leves e passageiras. Dicas: ofereça acolhimento, vista roupa confortável, não use pomadas no local e siga a orientação do profissional de saúde sobre medicamentos. Procure atendimento se houver febre alta, dificuldade para respirar, convulsão, sonolência excessiva ou reação alérgica intensa."
   },
   {
     key: "10-years",
     age: "Aos 10 anos",
     months: 120,
-    vaccines: ["Papiloma Humano (HPV9) em duas doses", "Reforço do Tétano e Difteria (Td)"]
+    vaccines: ["Papiloma Humano (HPV9) em duas doses", "Reforço do Tétano e Difteria (Td)"],
+    tip: "HPV9 e reforço Td, conforme o calendário aplicável. Pode haver dor local, mal-estar leve ou febre baixa. Dicas: manter hidratação, usar roupa confortável e seguir a orientação do profissional de saúde sobre medicamentos. Procure atendimento se houver febre alta, dificuldade para respirar, convulsão, sonolência excessiva ou reação alérgica intensa."
   }
 ];
 
@@ -980,6 +987,7 @@ function renderProfileForm(baby) {
   form.sex.value = baby.sex || "";
   form.weight.value = baby.weight || "";
   form.height.value = baby.height || "";
+  form.allergies.value = baby.allergies || "";
 }
 
 function notInformed(value, suffix = "") {
@@ -1007,6 +1015,7 @@ function renderProfileOverview(baby) {
   $("#profileHeightSummary").textContent = notInformed(baby.height, " cm");
   $("#profileHeightDetail").textContent = getGrowthSummary(baby).heightTrend || "Não informado";
   $("#profileBmiSummary").textContent = profileBmi(baby);
+  $("#profileAllergiesSummary").textContent = notInformed(baby.allergies);
   $("#profileContactSummary").textContent = doctors.length ? `${doctors.length} contato${doctors.length === 1 ? "" : "s"}` : "Não informado";
   $("#profileSettingsSummary").textContent = state.settings.softNight ? "Modo noturno ativo" : state.settings.visualAlerts ? "Alertas ativos" : "Alertas desativados";
   $("#profileSyncSummary").textContent = authUser ? "Google conectado" : "Backup local";
@@ -1066,9 +1075,9 @@ function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || location.protocol === "file:") return;
   let refreshing = false;
   navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (refreshing || sessionStorage.getItem("meu-bebe:sw-refreshed-v28")) return;
+    if (refreshing || sessionStorage.getItem("meu-bebe:sw-refreshed-v29")) return;
     refreshing = true;
-    sessionStorage.setItem("meu-bebe:sw-refreshed-v28", "1");
+    sessionStorage.setItem("meu-bebe:sw-refreshed-v29", "1");
     window.location.reload();
   });
   navigator.serviceWorker.register("service-worker.js").then((registration) => {
@@ -2301,7 +2310,7 @@ function renderVaccineView(baby) {
     <article class="feed-history-item">
       <div>
         <strong>${esc(record.name || "Vacina")}</strong>
-        <span>${esc(record.pnvAge || formatOnlyDate(record.date))}${record.nextDose ? ` · Próxima: ${esc(formatOnlyDate(`${record.nextDose}T12:00`))}` : ""}</span>
+        <span>${esc(record.pnvAge || formatOnlyDate(record.date))}${record.appliedDate ? ` · Aplicada em ${esc(formatOnlyDate(`${record.appliedDate}T12:00`))}` : ""}${record.nextDose ? ` · Próxima: ${esc(formatOnlyDate(`${record.nextDose}T12:00`))}` : ""}</span>
         <small>${esc(vaccineRecordStatus(record))}${record.place ? ` · ${esc(record.place)}` : ""}${record.note ? ` · ${esc(record.note)}` : ""}</small>
       </div>
       <div class="feed-history-actions">
@@ -2325,7 +2334,7 @@ function pnvState(item, baby = activeBaby()) {
   const dueDate = pnvDueDate(baby, item);
   const savedStatus = record?.pnvStatus || (record?.taken === "yes" ? "taken" : record?.taken === "no" ? "not-taken" : "");
   const status = savedStatus || (dueDate && dueDate < new Date() ? "late" : "pending");
-  return { ...item, dueDate, record, status, note: record?.note || record?.pnvNote || "" };
+  return { ...item, dueDate, record, status, note: record?.note || record?.pnvNote || "", appliedDate: record?.appliedDate || "" };
 }
 
 function vaccineStatusLabel(status) {
@@ -2354,6 +2363,13 @@ function renderVaccineSchedule(baby) {
         </div>
         <b>${esc(vaccineStatusLabel(item.status))}</b>
       </header>
+      <div class="pnv-tip">
+        <strong>Dica</strong>
+        <p>${esc(item.tip)}</p>
+      </div>
+      <label>Data aplicada
+        <input data-pnv-applied-date="${esc(item.key)}" type="date" value="${esc(item.appliedDate)}">
+      </label>
       <div class="pnv-actions">
         <button type="button" data-pnv-status="taken" data-pnv-key="${esc(item.key)}">Tomou</button>
         <button type="button" data-pnv-status="not-taken" data-pnv-key="${esc(item.key)}">Não tomou</button>
@@ -2378,8 +2394,10 @@ function savePnvRecord(key, updates = {}) {
     place: existing?.place || "",
     nextDose: "",
     date: existing?.date || (dueDate ? dueDate.toISOString() : new Date().toISOString()),
+    appliedDate: existing?.appliedDate || "",
     ...updates
   };
+  if (payload.appliedDate) payload.date = `${payload.appliedDate}T12:00`;
   payload.taken = payload.pnvStatus === "taken" ? "yes" : payload.pnvStatus === "not-taken" ? "no" : (existing?.taken || "");
   if (existing) updateRecord(existing.id, payload);
   else addRecord("vaccine", payload);
@@ -2964,6 +2982,7 @@ function setupForms() {
     baby.sex = data.sex || "";
     baby.weight = cleanNumber(data.weight);
     baby.height = cleanNumber(data.height);
+    baby.allergies = data.allergies || "";
     saveState();
     toast("Perfil atualizado em todas as telas");
   });
@@ -3337,6 +3356,7 @@ function setupEvents() {
       taken: data.taken,
       place: data.place,
       note: data.note,
+      appliedDate: data.date || "",
       date: data.date ? `${data.date}T12:00` : new Date().toISOString()
     });
     form.reset();
@@ -3351,9 +3371,15 @@ function setupEvents() {
   });
   $("#vaccineSchedule").addEventListener("change", (event) => {
     const field = event.target.closest("[data-pnv-note]");
-    if (!field) return;
-    savePnvRecord(field.dataset.pnvNote, { note: field.value, pnvNote: field.value });
-    showHealthFeedback("#vaccineFeedback", "Observação da vacina salva.");
+    const appliedDate = event.target.closest("[data-pnv-applied-date]");
+    if (field) {
+      savePnvRecord(field.dataset.pnvNote, { note: field.value, pnvNote: field.value });
+      showHealthFeedback("#vaccineFeedback", "Observação da vacina salva.");
+    }
+    if (appliedDate) {
+      savePnvRecord(appliedDate.dataset.pnvAppliedDate, { appliedDate: appliedDate.value });
+      showHealthFeedback("#vaccineFeedback", "Data de aplicação salva.");
+    }
   });
   $("#vaccineSchedule").addEventListener("input", (event) => {
     const field = event.target.closest("[data-pnv-note]");

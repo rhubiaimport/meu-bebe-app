@@ -1115,6 +1115,24 @@ body.soft-night textarea {
   background: rgba(255, 230, 227, 0.95);
 }
 
+.pnv-tip {
+  padding: 12px;
+  border: 1px solid rgba(123, 191, 226, 0.22);
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(232, 246, 255, 0.9), rgba(255, 255, 255, 0.9));
+}
+
+.pnv-tip strong {
+  color: var(--blue-strong);
+  font-size: 0.9rem;
+}
+
+.pnv-tip p {
+  margin: 6px 0 0;
+  color: var(--text);
+  font-size: 0.92rem;
+}
+
 .pnv-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1135,7 +1153,8 @@ body.soft-night textarea {
   background: linear-gradient(135deg, #ffe6e3, #ffffff);
 }
 
-.pnv-card textarea {
+.pnv-card textarea,
+.profile-form textarea {
   width: 100%;
   min-height: 68px;
   padding: 12px;
@@ -1147,7 +1166,19 @@ body.soft-night textarea {
   outline: none;
 }
 
-.pnv-card textarea:focus {
+.pnv-card input[type="date"] {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  color: var(--text);
+  background: var(--surface);
+}
+
+.pnv-card textarea:focus,
+.pnv-card input[type="date"]:focus,
+.profile-form textarea:focus {
   border-color: var(--blue-strong);
   box-shadow: 0 0 0 4px rgba(123, 191, 226, 0.18);
 }

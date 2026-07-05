@@ -9,7 +9,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="assets/baby-clouds.png" type="image/png">
     <link rel="apple-touch-icon" href="assets/baby-clouds.png">
-    <link rel="stylesheet" href="style.css?v=28">
+    <link rel="stylesheet" href="style.css?v=29">
     <script src="firebase-config.js"></script>
   </head>
   <body>
@@ -967,8 +967,8 @@
             </article>
             <article class="profile-info-card">
               <small>Alergias</small>
-              <strong>Não informado</strong>
-              <span>Campo preparado para histórico clínico</span>
+              <strong id="profileAllergiesSummary">Não informado</strong>
+              <span>Informações importantes para consultas</span>
             </article>
             <article class="profile-info-card">
               <small>Contatos importantes</small>
@@ -1029,6 +1029,9 @@
               </label>
               <label>📏 Tamanho atual (cm)
                 <input name="height" type="number" min="0" step="0.1">
+              </label>
+              <label>🩺 Alergias
+                <textarea name="allergies" rows="3" placeholder="Ex: leite, medicamentos, alimentos..."></textarea>
               </label>
               <button type="submit">Atualizar perfil</button>
             </form>
@@ -1210,6 +1213,6 @@
       <option value="Outra observação"></option>
     </datalist>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="script.js?v=28"></script>
+    <script src="script.js?v=29"></script>
   </body>
 </html>
