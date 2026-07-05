@@ -1143,9 +1143,9 @@ function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || location.protocol === "file:") return;
   let refreshing = false;
   navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (refreshing || sessionStorage.getItem("meu-bebe:sw-refreshed-v34")) return;
+    if (refreshing || sessionStorage.getItem("meu-bebe:sw-refreshed-v35")) return;
     refreshing = true;
-    sessionStorage.setItem("meu-bebe:sw-refreshed-v34", "1");
+    sessionStorage.setItem("meu-bebe:sw-refreshed-v35", "1");
     window.location.reload();
   });
   navigator.serviceWorker.register("service-worker.js").then((registration) => {
