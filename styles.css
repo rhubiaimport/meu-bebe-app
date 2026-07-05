@@ -4113,3 +4113,35 @@ body.soft-night .subtab-row button.active {
   color: #8dcdf0;
   background: rgba(36, 77, 103, 0.42);
 }
+
+/* v37 - evita zoom travado no iPhone ao fechar o teclado */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
+select,
+textarea {
+  font-size: 16px !important;
+  line-height: 1.35;
+  transform: none;
+  touch-action: manipulation;
+}
+
+textarea {
+  line-height: 1.45;
+}
+
+input::placeholder,
+textarea::placeholder {
+  font-size: 16px;
+}
+
+@supports (-webkit-touch-callout: none) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}

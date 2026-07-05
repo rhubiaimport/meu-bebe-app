@@ -1143,9 +1143,9 @@ function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || location.protocol === "file:") return;
   let refreshing = false;
   navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (refreshing || sessionStorage.getItem("meu-bebe:sw-refreshed-v36")) return;
+    if (refreshing || sessionStorage.getItem("meu-bebe:sw-refreshed-v37")) return;
     refreshing = true;
-    sessionStorage.setItem("meu-bebe:sw-refreshed-v36", "1");
+    sessionStorage.setItem("meu-bebe:sw-refreshed-v37", "1");
     window.location.reload();
   });
   navigator.serviceWorker.register("service-worker.js").then((registration) => {
@@ -3731,8 +3731,37 @@ function setupEvents() {
   });
 }
 
+function setupMobileKeyboardZoomFix() {
+  const viewportMeta = document.querySelector("meta[name='viewport']");
+  const baseViewport = "width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content";
+  if (viewportMeta && viewportMeta.content !== baseViewport) viewportMeta.content = baseViewport;
+
+  const restoreViewport = () => {
+    window.setTimeout(() => {
+      if (isEditingField()) return;
+      if (viewportMeta) {
+        viewportMeta.content = `${baseViewport}, maximum-scale=1`;
+        window.setTimeout(() => {
+          viewportMeta.content = baseViewport;
+        }, 80);
+      }
+      document.documentElement.style.webkitTextSizeAdjust = "100%";
+      document.body.style.webkitTextSizeAdjust = "100%";
+      window.scrollTo(window.scrollX, window.scrollY);
+    }, 180);
+  };
+
+  document.addEventListener("focusout", (event) => {
+    if (event.target?.matches?.("input, textarea, select")) restoreViewport();
+  }, true);
+  window.visualViewport?.addEventListener("resize", () => {
+    if (!isEditingField()) restoreViewport();
+  });
+}
+
 function boot() {
   document.body.dataset.currentView = "home";
+  setupMobileKeyboardZoomFix();
   setupForms();
   setupEvents();
   document.addEventListener("focusout", flushQueuedRender);
