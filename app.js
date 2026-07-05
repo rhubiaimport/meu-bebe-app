@@ -1137,9 +1137,9 @@ function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || location.protocol === "file:") return;
   let refreshing = false;
   navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (refreshing || sessionStorage.getItem("meu-bebe:sw-refreshed-v32")) return;
+    if (refreshing || sessionStorage.getItem("meu-bebe:sw-refreshed-v33")) return;
     refreshing = true;
-    sessionStorage.setItem("meu-bebe:sw-refreshed-v32", "1");
+    sessionStorage.setItem("meu-bebe:sw-refreshed-v33", "1");
     window.location.reload();
   });
   navigator.serviceWorker.register("service-worker.js").then((registration) => {
@@ -1160,6 +1160,15 @@ function renderDashboard(baby) {
   const medicine = getMedicineSummary(records);
   const appointment = getAppointmentSummary(records);
   const growth = getGrowthSummary(baby);
+  const pnvItems = pnvSchedule.map((item) => pnvState(item, baby));
+  const nextVaccine = pnvItems
+    .filter((item) => item.status !== "taken")
+    .sort((a, b) => {
+      if (!a.dueDate) return 1;
+      if (!b.dueDate) return -1;
+      return a.dueDate - b.dueDate;
+    })[0];
+  const lateVaccines = pnvItems.filter((item) => item.status === "late").length;
 
   const focusCards = [
     {
@@ -1185,6 +1194,14 @@ function renderDashboard(baby) {
       value: appointment.doctor,
       meta: appointment.date === "--" ? "Nenhuma consulta marcada" : `${appointment.date} · ${appointment.time}`,
       tone: ""
+    },
+    {
+      key: "vaccine",
+      title: "Vacina pendente",
+      icon: "vaccine",
+      value: nextVaccine ? nextVaccine.vaccines.join(" + ") : "Tudo em dia",
+      meta: nextVaccine?.dueDate ? `Prevista para ${formatOnlyDate(nextVaccine.dueDate)}` : "Confira a carteirinha",
+      tone: lateVaccines ? "soon" : ""
     }
   ];
 
