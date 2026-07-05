@@ -65,12 +65,24 @@ const formTargets = {
 
 const pnvSchedule = [
   {
-    key: "birth",
+    key: "birth-vhb",
     age: "À nascença",
     months: 0,
-    vaccines: ["Hepatite B (VHB)", "Tuberculose (BCG)"],
+    vaccines: ["Hepatite B (VHB)"],
+    legacyKeys: ["birth"],
+    info: "Hepatite B protege contra a infeção pelo vírus da hepatite B.",
+    reactions: "Dor local, irritabilidade e febre baixa podem acontecer em situações indicadas.",
+    tips: "Amamente antes/depois da vacina, ofereça colo, vista roupa confortável, não use pomadas no local e siga a orientação do profissional de saúde sobre medicamentos.",
+    warning: "Febre alta, especialmente em menores de 3 meses, dificuldade para respirar, convulsão, sonolência excessiva ou reação alérgica intensa."
+  },
+  {
+    key: "birth-bcg",
+    age: "À nascença",
+    months: 0,
+    vaccines: ["Tuberculose (BCG)"],
+    legacyKeys: ["birth"],
     info: "BCG, quando indicada, protege contra formas graves de tuberculose.",
-    reactions: "Bolinha, pequena ferida e cicatriz são esperadas. Hepatite B: dor local, irritabilidade e febre baixa em situações indicadas.",
+    reactions: "Bolinha, pequena ferida e cicatriz são esperadas.",
     tips: "Amamente antes/depois da vacina, ofereça colo, vista roupa confortável, não use pomadas no local e siga a orientação do profissional de saúde sobre medicamentos.",
     warning: "Febre alta, especialmente em menores de 3 meses, dificuldade para respirar, convulsão, sonolência excessiva ou reação alérgica intensa."
   },
@@ -1096,9 +1108,9 @@ function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || location.protocol === "file:") return;
   let refreshing = false;
   navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (refreshing || sessionStorage.getItem("meu-bebe:sw-refreshed-v30")) return;
+    if (refreshing || sessionStorage.getItem("meu-bebe:sw-refreshed-v31")) return;
     refreshing = true;
-    sessionStorage.setItem("meu-bebe:sw-refreshed-v30", "1");
+    sessionStorage.setItem("meu-bebe:sw-refreshed-v31", "1");
     window.location.reload();
   });
   navigator.serviceWorker.register("service-worker.js").then((registration) => {
@@ -2346,8 +2358,14 @@ function pnvDueDate(baby, item) {
   return addMonths(`${baby.birthDate}T12:00`, item.months);
 }
 
-function pnvRecord(item, baby = activeBaby()) {
+function exactPnvRecord(item, baby = activeBaby()) {
   return healthRecords("vaccine", baby).find((record) => record.pnvKey === item.key);
+}
+
+function pnvRecord(item, baby = activeBaby()) {
+  const records = healthRecords("vaccine", baby);
+  return records.find((record) => record.pnvKey === item.key)
+    || records.find((record) => item.legacyKeys?.includes(record.pnvKey));
 }
 
 function pnvState(item, baby = activeBaby()) {
@@ -2414,20 +2432,21 @@ function savePnvRecord(key, updates = {}) {
   const item = pnvSchedule.find((entry) => entry.key === key);
   if (!item) return;
   const baby = activeBaby();
-  const existing = pnvRecord(item, baby);
+  const existing = exactPnvRecord(item, baby);
+  const inherited = existing || pnvRecord(item, baby);
   const dueDate = pnvDueDate(baby, item);
   const payload = {
     name: item.vaccines.join(" + "),
     pnvKey: item.key,
     pnvAge: item.age,
-    place: existing?.place || "",
+    place: inherited?.place || "",
     nextDose: "",
-    date: existing?.date || (dueDate ? dueDate.toISOString() : new Date().toISOString()),
-    appliedDate: existing?.appliedDate || "",
+    date: inherited?.date || (dueDate ? dueDate.toISOString() : new Date().toISOString()),
+    appliedDate: inherited?.appliedDate || "",
     ...updates
   };
   if (payload.appliedDate) payload.date = `${payload.appliedDate}T12:00`;
-  payload.taken = payload.pnvStatus === "taken" ? "yes" : payload.pnvStatus === "not-taken" ? "no" : (existing?.taken || "");
+  payload.taken = payload.pnvStatus === "taken" ? "yes" : payload.pnvStatus === "not-taken" ? "no" : (inherited?.taken || "");
   if (existing) updateRecord(existing.id, payload);
   else addRecord("vaccine", payload);
 }

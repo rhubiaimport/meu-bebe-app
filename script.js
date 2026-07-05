@@ -1,3 +1,3 @@
 const appScript = document.createElement("script");
-appScript.src = "app.js?v=30";
+appScript.src = "app.js?v=31";
 document.currentScript.after(appScript);
